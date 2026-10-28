@@ -2,6 +2,8 @@
 
 **Thesis Edition v1.1 · 28 October 2026**
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23731879.svg)](https://doi.org/10.5281/zenodo.23731879)
+
 **Author:** Ziwei Zhang
 
 Interactive mathematical visualizations accompanying a thesis, intended as an exploratory complement to rigorous written proofs.
@@ -25,8 +27,11 @@ The website's programming was developed with assistance from **OpenAI ChatGPT**,
 
 - **Interactive website:** https://zv5d.github.io/algebraic-surface/
 - **Public source:** https://github.com/ZV5d/algebraic-surface
-- **Frozen thesis snapshot:** branch `thesis-v1.1`, plus the exact public commit SHA.
+- **Frozen thesis snapshot:** [GitHub Release `v1.1.0`](https://github.com/ZV5d/algebraic-surface/releases/tag/v1.1.0), source commit `f08fa0289a1d1ee3e4984a143f57f34796c118d8`.
+- **Version-specific Zenodo DOI:** [10.5281/zenodo.23731879](https://doi.org/10.5281/zenodo.23731879).
 - **Citation metadata:** `CITATION.cff` supports GitHub's **Cite this repository** function.
+
+Suggested citation: **Zhang, Ziwei (2026). *Geometry of Algebraic Surfaces: Interactive Thesis Edition* (Version 1.1.0). Zenodo. https://doi.org/10.5281/zenodo.23731879**
 
 When citing interactive figures or demonstrations, include the website URL and the edition number. For source-code reproducibility, cite the exact Git commit, not only a moving branch.
 
