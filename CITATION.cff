@@ -3,7 +3,8 @@ message: "If you use the interactive website or its source in academic work, ple
 title: "Geometry of Algebraic Surfaces: Interactive Thesis Edition"
 type: software
 authors:
-  - name: "ZV5d"
+  - given-names: "Ziwei"
+    family-names: "Zhang"
 version: "1.1.0"
 date-released: 2026-10-28
 url: "https://zv5d.github.io/algebraic-surface/"
