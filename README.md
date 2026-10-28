@@ -2,6 +2,8 @@
 
 **Thesis Edition v1.1 · 28 October 2026**
 
+**Author:** Ziwei Zhang
+
 Interactive mathematical visualizations accompanying a thesis, intended as an exploratory complement to rigorous written proofs.
 
 ## Contents
