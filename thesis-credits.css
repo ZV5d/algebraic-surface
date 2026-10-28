@@ -1,0 +1,62 @@
+/* Thesis edition credits and mathematical-engraving watermark.
+   Decorative SVG only: not a claimed diagram of the Clebsch cubic.
+   Kept separate so the established page styles and animations are untouched. */
+.thesis-credits {
+    position: relative;
+    max-width: 100%;
+    margin: clamp(20px, 3.8vh, 42px) 0 0;
+    padding: 0 2px clamp(10px, 2vh, 20px);
+    color: #666f6b;
+    font-family: var(--ui-font, Arial, Helvetica, sans-serif);
+}
+.thesis-credits-watermark {
+    display: block;
+    width: min(100%, 208px);
+    height: auto;
+    margin: 0 auto 7px;
+    opacity: 0.76;
+    pointer-events: none;
+    user-select: none;
+}
+.thesis-mark-orbits { stroke: #c0cac2; }
+.thesis-mark-curves { stroke: #86a18d; }
+.thesis-mark-points { fill: #b7a276; }
+.thesis-credits-rule {
+    height: 1px;
+    margin: 0 0 13px;
+    background: linear-gradient(90deg, transparent, #d2d9d4 15%, #d2d9d4 85%, transparent);
+}
+.thesis-credits-heading,
+.thesis-credits-edition {
+    font: 700 10px/1.45 var(--ui-font, Arial, Helvetica, sans-serif);
+    letter-spacing: .13em;
+}
+.thesis-credits-heading { color: #6d7971; }
+.thesis-credits p {
+    margin: 9px 0 0;
+    font: 400 clamp(11px, 4.25cqw, 12px)/1.48 var(--ui-font, Arial, Helvetica, sans-serif);
+    overflow-wrap: break-word;
+}
+.thesis-credits em { font-style: italic; }
+.thesis-credits-edition {
+    margin-top: 14px;
+    color: #969d99;
+    font-size: 9px;
+    letter-spacing: .11em;
+}
+body.dark-mode .thesis-credits { color: #abb5b0; }
+body.dark-mode .thesis-mark-orbits { stroke: #64786b; }
+body.dark-mode .thesis-mark-curves { stroke: #8caa93; }
+body.dark-mode .thesis-mark-points { fill: #b9a67c; }
+body.dark-mode .thesis-credits-rule {
+    background: linear-gradient(90deg, transparent, #4d5952 15%, #4d5952 85%, transparent);
+}
+body.dark-mode .thesis-credits-heading { color: #b7c6bb; }
+body.dark-mode .thesis-credits-edition { color: #8f9c94; }
+@media (max-height: 720px) {
+    .thesis-credits { margin-top: 18px; }
+    .thesis-credits-watermark { width: min(100%, 170px); }
+}
+@media (prefers-reduced-motion: reduce) {
+    .thesis-credits-watermark { transition: none; }
+}

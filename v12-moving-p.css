@@ -1,0 +1,94 @@
+/* v12: scoped extras on top of stable v10 layout; never restyle geometry. */
+.v12-enter{display:block;width:100%;text-align:left;min-height:27px;border:1px solid rgba(0,159,227,.46);background:rgba(0,159,227,.055);padding:5px 7px;margin:11px 0 9px;border-radius:5px;color:#137bad;font:11px Arial,sans-serif;cursor:pointer}
+.v12-enter:hover{background:rgba(0,159,227,.1)}
+.v12-control{border-top:1px solid #ddd;padding-top:8px}
+.v12-group-title{font:600 10px Arial,sans-serif;letter-spacing:.09em;color:#858585;margin:11px 0 8px}
+.v12-control input[type=range]{display:block;width:100%;accent-color:#A944A7;margin:3px 0 11px}
+.v12-field{display:flex;justify-content:space-between;gap:5px;font:11px/1.3 Arial,sans-serif;color:#43494e}
+.v12-field output{color:#747d80}
+#v12-line-slider-value{font:11px Arial,sans-serif;color:#6c6c6c}
+.v12-control .geometry-control{margin:7px 0;font-size:12px}
+.v12-control .v12-status{border-left:2px solid #bac9cc;padding:6px 7px;margin-top:11px;background:rgba(120,157,53,.045);font:11px/1.4 Arial,sans-serif;color:#52616a}
+.v12-return{display:block;margin:17px 0 0;width:100%;padding:7px;border:1px solid #afc5d1;border-radius:4px;background:#fff;color:#247eac;cursor:pointer;font:11px Arial,sans-serif}
+body.v12-moving-p #clebsch-tangent-projection-card,body.v12-moving-p #clebsch-slice-card,body.v12-moving-p #clebsch-complex-contact-card,body.v12-moving-p #clebsch-blowup-view,body.v12-moving-p #clebsch-blowup-prompt{display:none!important}
+body.dark-mode .v12-return{background:#292d31;color:#d2e8f5;border-color:#4b6677}
+body.dark-mode .v12-status{background:#2a3032;color:#c5d5d9}
+body.dark-mode .v12-field,body.dark-mode .v12-group-title{color:#cad5da}
+
+body.v12-moving-p #geometry-controls,body.v12-moving-p #control-heading-actions{display:none!important}
+
+/* v12 color semantics never depend on the selected Schläfli family. */
+.v12-color-legend{
+    margin:11px 0;padding:7px 8px;border:1px solid #dfe7e9;border-radius:5px;
+    display:grid;grid-template-columns:1fr 1fr;gap:8px 5px;
+    font:10px/1.3 Arial,Helvetica,sans-serif;color:#53636a;
+}
+.v12-color-legend span{display:flex;align-items:center;gap:5px}
+.v12-color-legend i{display:inline-block;width:10px;height:10px;
+    flex:0 0 10px;border-radius:50%}
+.v12-swatch-p{background:#A944A7}
+.v12-swatch-incident{background:#009FE3}
+.v12-swatch-lines{background:#789D35}
+.v12-swatch-ramification{background:#A944A7;border:1px solid #7b3985}
+/* Dashed purple over the existing blue line = a component of R_P. */
+.v12-swatch-shared{
+    background:repeating-linear-gradient(
+        90deg,#A944A7 0 4px,transparent 4px 7px
+    );
+    border-top:2px solid #009FE3;
+    border-radius:0!important;
+}
+#v12-ramification-component-legend[hidden]{display:none!important}
+.v12-swatch-test{background:#A71912}
+.v12-swatch-contact{background:#FFAB00}
+.v12-swatch-target{background:#009FE3;border:2px solid #fff;outline:1px solid #009FE3}
+#v12-crossing-select{width:100%;max-width:100%;font-size:11px;
+    margin:8px 0 6px;padding:5px;border:1px solid #cad4d9;
+    border-radius:4px;background:#fff;color:#40545e}
+.v12-crossing-note{font:10px/1.4 Arial,sans-serif;color:#7b858c;
+    margin:3px 0 13px}
+body.dark-mode .v12-color-legend{border-color:#555;color:#d6dee1}
+body.dark-mode #v12-crossing-select{background:#2a3034;color:#ddd;border-color:#555}
+
+/* Moving-P target: reuse v10's floating 2D Desmos card vocabulary. */
+.v12-branch-card{
+    width:clamp(255px,25vw,335px);
+    height:clamp(290px,39vh,385px);
+    z-index:46;
+}
+.v12-branch-card .clebsch-target-card-header{
+    min-height:120px;
+    cursor:default;
+}
+.v12-branch-card .v12-branch-legend{
+    display:flex;
+    flex-wrap:wrap;
+    column-gap:10px;
+    row-gap:4px;
+    margin-top:6px;
+    font:10px/1.3 Arial,Helvetica,sans-serif;
+    color:#52636a;
+}
+.v12-branch-legend-item{
+    display:inline-flex;
+    align-items:center;
+    gap:5px;
+}
+.v12-branch-legend-item[hidden]{display:none!important}
+.v12-branch-legend-item i{display:inline-block;flex:0 0 auto}
+.v12-branch-key-curve{width:14px;border-top:2px solid #789D35}
+.v12-branch-key-node{
+    width:9px;height:9px;
+    border-radius:50%;background:#009FE3;
+}
+.v12-branch-key-direction{
+    width:9px;height:9px;
+    border:1.5px solid #009FE3;
+    border-radius:50%;background:transparent;box-sizing:border-box;
+}
+.v12-branch-card .clebsch-target-calculator{top:120px}
+body.dark-mode .v12-branch-legend{color:#d6dee1}
+@media(max-height:820px) and (max-width:1600px){
+    .v12-branch-card{height:320px;width:265px}
+    .v12-branch-card .clebsch-target-calculator{top:120px}
+}

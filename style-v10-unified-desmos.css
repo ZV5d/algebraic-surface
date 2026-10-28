@@ -1,0 +1,5353 @@
+/* v10-unified-desmos — visual layout retained from v4.83; algebra safety changes are in JavaScript. */
+/* ============================================================
+   PAGE
+   ============================================================ */
+
+* {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+body {
+    color: #202020;
+    background: #ffffff;
+    font-family: Georgia, "Times New Roman", serif;
+}
+
+button,
+input {
+    font: inherit;
+}
+
+.app-shell {
+    display: grid;
+
+    width: 100vw;
+    height: 100vh;
+}
+
+
+/* ============================================================
+   LEFT PANEL
+   ============================================================ */
+
+.left-panel {
+    min-width: 0;
+    border-right: 1px solid #d9d9d9;
+    background: #fbfbfb;
+}
+
+.eyebrow,
+.nav-heading,
+.surface-type,
+.geometry-group {
+    font-family: Arial, Helvetica, sans-serif;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+}
+
+.eyebrow {
+    color: #888;
+    margin-bottom: 5px;
+}
+
+.nav-heading {
+    color: #9a9a9a;
+}
+
+.surface-button {
+    display: block;
+    width: 100%;
+    margin: 2px 0;
+
+    border: 0;
+    border-radius: 4px;
+    background: transparent;
+
+    color: #222;
+    text-align: left;
+    cursor: pointer;
+}
+
+.surface-button:hover {
+    background: #f1f1f1;
+}
+
+.surface-button.active {
+    background: #e9e9e9;
+}
+
+.geometry-group {
+    margin: 18px 0 8px;
+    color: #777;
+}
+
+.geometry-group.purple {
+    color: #A944A7;
+}
+
+.geometry-group.blue {
+    color: #009FE3;
+}
+
+.geometry-group.angle {
+    color: #666;
+}
+
+.geometry-control {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 8px 0;
+    font-size: 13px;
+}
+
+.geometry-control input {
+    accent-color: #777;
+}
+
+.warmup-slider-header {
+    justify-content: space-between;
+}
+
+.warmup-slider-name {
+    font-style: italic;
+}
+
+.warmup-note {
+    margin-top: 20px;
+    color: #777;
+}
+
+
+/* ============================================================
+   CENTER STAGE
+   ============================================================ */
+
+.visual-stage {
+    position: relative;
+    background: white;
+}
+
+.standard-calculator,
+.warmup-calculator {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.warmup-view {
+    position: absolute;
+    inset: 0;
+}
+
+.warmup-stage {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+}
+
+
+/* ============================================================
+   WARM-UP: INVISIBLE ROOT SOLVER
+   ============================================================ */
+
+#intersection-solver {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 600px;
+    height: 600px;
+    opacity: 0.001;
+    pointer-events: none;
+    z-index: 0;
+}
+
+
+/* ============================================================
+   WARM-UP: OVERLAY + PROJECTIONS
+   ============================================================ */
+
+#graph-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 10;
+    pointer-events: none;
+}
+
+.projection {
+    position: absolute;
+    top: 3%;
+
+    background: white;
+    border: 1px solid #d8d8d8;
+
+    overflow: visible;
+    pointer-events: auto;
+    z-index: 10;
+
+    transition:
+        opacity 0.16s ease,
+        visibility 0.16s ease;
+}
+
+.purple-projection {
+    left: 28%;
+}
+
+.blue-projection {
+    right: 3%;
+}
+
+.projection-calculator {
+    width: 100%;
+    height: 100%;
+}
+
+/* Native 2D + / − / home controls stay available, but the small cards
+   should remain visually clean.  JavaScript reveals this stack only while
+   the pointer is in the card's upper-right control zone. */
+.projection-calculator .dcg-zoom-container,
+.projection-calculator .dcg-zoom-buttons-container {
+    opacity: 0 !important;
+    pointer-events: none !important;
+    transform: scale(0.78);
+    transform-origin: top right;
+    transition: opacity 0.12s ease;
+}
+
+.projection.projection-controls-visible
+    .projection-calculator .dcg-zoom-container,
+.projection.projection-controls-visible
+    .projection-calculator .dcg-zoom-buttons-container {
+    opacity: 1 !important;
+    pointer-events: auto !important;
+}
+
+.mode-hidden {
+    opacity: 0 !important;
+    visibility: hidden;
+    pointer-events: none !important;
+}
+
+
+/* ============================================================
+   WARM-UP: DRAG HANDLE
+   ============================================================ */
+
+.drag-dot {
+    position: absolute;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    cursor: grab;
+    z-index: 30;
+    opacity: 0.78;
+    transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+.drag-dot:hover {
+    opacity: 1;
+    transform: scale(1.08);
+}
+
+.drag-dot:active {
+    cursor: grabbing;
+}
+
+.drag-dot::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    opacity: 0.28;
+    filter: blur(3px);
+}
+
+.drag-dot::after {
+    content: "";
+    position: absolute;
+    left: 6px;
+    top: 6px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    box-shadow:
+        0 0 0 2px rgba(255, 255, 255, 0.95),
+        0 1px 4px rgba(0, 0, 0, 0.25);
+}
+
+.purple-dot {
+    right: -12px;
+    bottom: -12px;
+}
+
+.purple-dot::before,
+.purple-dot::after {
+    background: #A944A7;
+}
+
+.blue-dot {
+    left: -12px;
+    bottom: -12px;
+}
+
+.blue-dot::before,
+.blue-dot::after {
+    background: #009FE3;
+}
+
+
+/* ============================================================
+   WARM-UP: LEGEND
+   ============================================================ */
+
+.scene-labels {
+    position: absolute;
+    top: clamp(16px, 2.5vh, 28px);
+    left: clamp(14px, 2.2vw, 34px);
+
+    padding: 0.4em 0.55em;
+    background: rgba(255, 255, 255, 0.80);
+    border-radius: 7px;
+
+    z-index: 20;
+    pointer-events: none;
+
+    color: #444;
+    line-height: 1.28;
+}
+
+.scene-label-row {
+    display: grid;
+    grid-template-columns: 1.583em auto;
+    column-gap: 0.417em;
+    align-items: center;
+    margin: 0.125em 0;
+}
+
+.scene-label-row.complete-only {
+    display: none;
+}
+
+.scene-label-row.complete-only.show {
+    display: grid;
+}
+
+.scene-swatch {
+    display: inline-block;
+    width: 1.167em;
+    height: 0.833em;
+    border-radius: 0.083em;
+    justify-self: center;
+}
+
+.surface-swatch {
+    width: 1.167em;
+    height: 0.985em;
+    justify-self: center;
+    overflow: visible;
+}
+
+.surface-swatch path {
+    fill: url(#surface-gradient);
+    stroke: #3D603B;
+    stroke-width: 1.2;
+    stroke-linejoin: round;
+}
+
+.h1-swatch {
+    background: #BEAEC1;
+    border: 0.05em solid #907A96;
+}
+
+.h2-swatch {
+    background: #A5BAC5;
+    border: 0.05em solid #7E9AA8;
+}
+
+.curve-swatch {
+    width: 1.167em;
+    height: 0.583em;
+    justify-self: center;
+    overflow: visible;
+}
+
+.curve-swatch path {
+    fill: none;
+    stroke: #A944A7;
+    stroke-width: 3.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.blue-curve-swatch path {
+    stroke: #009FE3;
+}
+
+.scene-line {
+    display: inline-block;
+    width: 1.167em;
+    height: 0.104em;
+    border-radius: 999px;
+    justify-self: center;
+    background: #FFAB00;
+}
+
+.point-swatch {
+    width: 0.458em;
+    height: 0.458em;
+    border-radius: 50%;
+    background: #FFAB00;
+    border: clamp(1px, 0.075vw, 1.5px) solid #A16600;
+    box-sizing: border-box;
+    display: inline-block;
+    justify-self: center;
+}
+
+
+/* ============================================================
+   RIGHT PANEL
+   ============================================================ */
+
+.right-panel {
+    border-left: 1px solid #d9d9d9;
+    background: #fff;
+}
+
+#info-panel h2 {
+    margin: 0 0 6px;
+    font-size: 23px;
+    font-weight: 500;
+}
+
+#info-panel h3 {
+    margin: 24px 0 9px;
+    font-size: 16px;
+}
+
+#info-panel p {
+    margin: 10px 0;
+    font-size: 13px;
+    line-height: 1.55;
+}
+
+.surface-type {
+    margin-bottom: 20px;
+    color: #999;
+}
+
+.theorem {
+    margin-top: 22px;
+    padding: 14px 15px;
+    border-left: 2px solid #bdbdbd;
+    background: #fafafa;
+}
+
+.theorem-name {
+    margin-bottom: 8px;
+    font-style: italic;
+    font-weight: 600;
+}
+
+.proof-question {
+    margin: 22px 0 10px;
+}
+
+.proof-question-title {
+    margin-bottom: 5px;
+    font-size: 14px;
+}
+
+.proof-tabs {
+    display: flex;
+    gap: 7px;
+    margin: 14px 0;
+}
+
+.proof-tab,
+.complete-picture-button {
+    padding: 6px 10px;
+    border: 1px solid #cfcfcf;
+    border-radius: 5px;
+    background: white;
+    color: #222;
+    cursor: pointer;
+}
+
+.proof-tab:hover,
+.complete-picture-button:hover {
+    background: #fafafa;
+}
+
+.proof-tab.active,
+.complete-picture-button.active {
+    border-color: #FFAB00;
+    box-shadow: inset 0 -2px 0 #FFAB00;
+}
+
+.proof-answer {
+    display: none;
+}
+
+.proof-answer.active {
+    display: block;
+}
+
+.proof-note {
+    margin-top: 14px;
+    padding-top: 10px;
+    border-top: 1px solid #e2e2e2;
+    font-size: 11px;
+    line-height: 1.45;
+    opacity: 0.72;
+}
+
+.complete-picture-wrap {
+    border-top: 1px solid #e4e4e4;
+}
+
+.complete-picture-button {
+    width: 100%;
+}
+
+
+/* ============================================================
+   SMALLER DESKTOP WINDOWS
+   ============================================================ */
+
+@media (max-width: 1180px) {
+
+    .right-panel {
+        padding-left: 18px;
+        padding-right: 18px;
+    }
+
+    .purple-projection {
+        left: 30%;
+    }
+}
+
+
+
+/* ============================================================
+   V3 WARM-UP REFINEMENTS
+   ============================================================ */
+
+/* Larger, more comfortable reading size only on the warm-up. */
+
+.warmup-info h2 {
+    margin-bottom: 8px !important;
+}
+
+.warmup-info .proof-question {
+    margin-top: 26px;
+    font-size: 1em;
+}
+
+.warmup-info .proof-answer {
+    font-size: 1em;
+    line-height: 1.58;
+}
+
+/* Hidden means no placeholder space in the right panel. */
+.complete-picture-wrap[hidden] {
+    display: none;
+}
+
+/* The cards are positioned responsively by JavaScript in v3. */
+.purple-projection,
+.blue-projection {
+    transform: none;
+}
+
+
+/* ============================================================
+   V4 WARM-UP: POLISHED SLIDERS + PLAY BUTTONS
+   ============================================================ */
+
+.warmup-slider {
+    --slider-color: #666;
+}
+
+.warmup-slider.purple {
+    --slider-color: #A944A7;
+}
+
+.warmup-slider.blue {
+    --slider-color: #009FE3;
+}
+
+.warmup-slider.angle {
+    --slider-color: #626262;
+}
+
+.warmup-play-button {
+    border: 1px solid #c9c9c9;
+    background: #fff;
+    color: var(--slider-color);
+    font-family: Arial, Helvetica, sans-serif;
+    line-height: 1;
+    cursor: pointer;
+    transition:
+        border-color 0.15s ease,
+        background 0.15s ease,
+        transform 0.15s ease;
+}
+
+.warmup-play-button:hover {
+    border-color: var(--slider-color);
+}
+
+.warmup-play-button.playing {
+    color: #fff;
+    border-color: var(--slider-color);
+    background: var(--slider-color);
+}
+
+.warmup-slider input[type="range"] {
+    width: 100%;
+    height: 18px;
+    margin: 0;
+    padding: 0;
+    appearance: none;
+    -webkit-appearance: none;
+    background: transparent;
+    cursor: pointer;
+}
+
+.warmup-slider input[type="range"]::-webkit-slider-runnable-track {
+    height: 4px;
+    border: 1px solid #c8c8c8;
+    border-radius: 999px;
+    background: #ececec;
+}
+
+.warmup-slider input[type="range"]::-webkit-slider-thumb {
+    width: 14px;
+    height: 14px;
+    margin-top: -6px;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    background: var(--slider-color);
+    box-shadow:
+        0 0 0 1px var(--slider-color),
+        0 1px 3px rgba(0, 0, 0, 0.20);
+    appearance: none;
+    -webkit-appearance: none;
+}
+
+.warmup-slider input[type="range"]::-moz-range-track {
+    height: 4px;
+    border: 1px solid #c8c8c8;
+    border-radius: 999px;
+    background: #ececec;
+}
+
+.warmup-slider input[type="range"]::-moz-range-thumb {
+    width: 12px;
+    height: 12px;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    background: var(--slider-color);
+    box-shadow: 0 0 0 1px var(--slider-color);
+}
+
+
+/* ============================================================
+   V4 WARM-UP: COMPLETE-PICTURE CONTROLS IN LEFT PANEL
+   ============================================================ */
+
+.complete-controls-toggle {
+    display: block;
+    margin: 4px 0 6px;
+    border: 0;
+    border-top: 1px solid #dddddd;
+    background: transparent;
+    color: #777;
+    text-align: right;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.complete-controls-toggle[hidden],
+.complete-controls-panel[hidden] {
+    display: none;
+}
+
+.complete-control-heading,
+.complete-control-subheading {
+    margin: 2px 0 7px;
+    color: #777;
+    font-weight: 700;
+    letter-spacing: 0.13em;
+}
+
+.complete-control-row {
+    display: grid;
+    align-items: center;
+    cursor: pointer;
+}
+
+.complete-control-row input {
+    width: 13px;
+    height: 13px;
+    margin: 0;
+}
+
+.complete-control-label {
+    line-height: 1.18;
+}
+
+.complete-mini-swatch {
+    display: inline-block;
+    justify-self: center;
+}
+
+.h1-mini,
+.h2-mini {
+    border-radius: 2px;
+}
+
+.h1-mini {
+    border: 1px solid #907A96;
+    background: #BEAEC1;
+}
+
+.h2-mini {
+    border: 1px solid #7E9AA8;
+    background: #A5BAC5;
+}
+
+.purple-curve-mini,
+.blue-curve-mini,
+.line-mini {
+    height: 2px;
+    border-radius: 999px;
+}
+
+.purple-curve-mini {
+    background: #A944A7;
+}
+
+.blue-curve-mini {
+    background: #009FE3;
+}
+
+.line-mini {
+    background: #FFAB00;
+}
+
+.point-mini {
+    border-radius: 50%;
+    background: #FFAB00;
+    border: clamp(1px, 0.075vw, 1.5px) solid #A16600;
+    box-sizing: border-box;
+}
+
+.purple-projection-label {
+    color: #A944A7;
+}
+
+.blue-projection-label {
+    color: #009FE3;
+}
+
+
+/* ============================================================
+   V4 WARM-UP: CRISP 2D CARDS
+   ============================================================ */
+
+.projection {
+    width: 200px;
+    height: 200px;
+    aspect-ratio: auto;
+    border-radius: 4px;
+    box-shadow:
+        0 2px 8px rgba(0, 0, 0, 0.16),
+        0 0 0 1px rgba(0, 0, 0, 0.02);
+}
+
+
+/* ============================================================
+   V4 WARM-UP: PROOF TYPOGRAPHY + LEFT RULE
+   ============================================================ */
+
+
+/* ============================================================
+   V4 COMPLETE PICTURE: LEGEND -> LEFT CONTROLS
+   ============================================================ */
+
+.scene-labels.complete-hidden {
+    display: none;
+}
+
+
+/* ============================================================
+   V4 COMPLETE PICTURE: COLLAPSIBLE RIGHT PROOF COLUMN
+   ============================================================ */
+
+.right-panel.complete-picture-mode {
+    position: relative;
+}
+
+.proof-panel-toggle {
+    position: absolute;
+    top: 10px;
+    left: 7px;
+    z-index: 50;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: 0;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.92);
+    color: #666;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 24px;
+    line-height: 25px;
+    cursor: pointer;
+}
+
+.proof-panel-toggle:hover {
+    color: #222;
+    background: #f3f3f3;
+}
+
+.proof-panel-toggle[hidden] {
+    display: none;
+}
+
+.right-panel.warmup-proof-collapsed {
+    overflow: hidden;
+    padding: 0;
+}
+
+.right-panel.warmup-proof-collapsed .warmup-info {
+    display: none;
+}
+
+.right-panel.complete-picture-mode:not(.warmup-proof-collapsed) {
+    padding-top: 52px;
+}
+
+.app-shell {
+    transition: grid-template-columns 0.20s ease;
+}
+
+@media (max-width: 1180px) {
+}
+
+
+/* ============================================================
+   V4.1 READABILITY
+   ============================================================ */
+
+.surface-button {
+    padding-top: 9px;
+    padding-bottom: 9px;
+}
+
+.warmup-note {
+    line-height: 1.5;
+}
+
+.complete-control-heading,
+.complete-subheading,
+.complete-control-row {
+    font-size: 12.5px;
+}
+
+/* ============================================================
+   V4.2 RESPONSIVE TYPE + CLEAN COMPLETE CONTROLS
+   ============================================================ */
+
+/* The side columns now grow gently on a large monitor, while
+   staying compact on a laptop. */
+
+/* Left navigation: keep the laptop size, but let it grow on a
+   large monitor instead of remaining stuck at small px values. */
+
+.eyebrow,
+.nav-heading,
+.surface-type,
+.geometry-group {
+    font-size: clamp(10px, 0.62vw, 12px);
+}
+
+.warmup-slider-header {
+    font-size: clamp(12.5px, 0.75vw, 14.5px);
+}
+
+.warmup-note {
+    font-size: clamp(11.5px, 0.68vw, 13.5px);
+}
+
+/* Floating mathematical legend. */
+.scene-labels {
+    font-size: clamp(17px, 1.18vw, 24px);
+}
+
+/* The right explanation was a little too large on a laptop but
+   looked right on a large monitor. */
+
+/* Prevent MathJax displays from ever pushing outside the right
+   column. Long formulae get their own horizontal breathing room. */
+.warmup-info mjx-container[display="true"] {
+    overflow-x: auto;
+    overflow-y: hidden;
+}
+
+/* The complete-picture list should look like part of Geometry,
+   not a second bordered card. */
+
+.complete-control-row {
+    position: relative;
+}
+
+.complete-control-label {
+    white-space: normal;
+}
+
+/* Hide the browser checkbox itself and use a stable custom one. */
+.complete-control-checkbox {
+    position: absolute;
+    opacity: 0;
+    width: 1px;
+    height: 1px;
+    pointer-events: none;
+}
+
+.complete-control-check {
+    border: 1px solid #aeb4ba;
+    border-radius: 3px;
+    background: #fff;
+    position: relative;
+}
+
+.complete-control-checkbox:checked + .complete-control-check {
+    border-color: #009FE3;
+    background: #009FE3;
+}
+
+.complete-control-checkbox:checked + .complete-control-check::after {
+    content: "";
+    position: absolute;
+    border-right: 2px solid #fff;
+    border-bottom: 2px solid #fff;
+}
+
+.complete-control-row:hover .complete-control-check {
+    box-shadow: 0 0 0 2px rgba(45, 112, 179, 0.10);
+}
+
+/* Exact same wavy S-symbol as the floating legend. */
+.surface-mini {
+    border: 0;
+    border-radius: 0;
+    background: none;
+    overflow: visible;
+}
+
+.surface-mini path {
+    fill: url(#complete-surface-gradient);
+    stroke: #3D603B;
+    stroke-width: 1.2;
+    stroke-linejoin: round;
+}
+
+/* Keep the narrower-laptop layout sensible. */
+@media (max-width: 1180px) {
+}
+
+/* ============================================================
+   V4.3 ADJUSTMENT + PROOF FIT REFINEMENTS
+   ============================================================ */
+
+/* Give the proof column a little more room, especially on laptops. */
+.app-shell {
+    grid-template-columns:
+        clamp(210px, 13.5vw, 270px)
+        minmax(500px, 1fr)
+        clamp(330px, 23vw, 440px);
+}
+
+.app-shell.warmup-proof-collapsed {
+    grid-template-columns:
+        clamp(210px, 13.5vw, 270px)
+        minmax(500px, 1fr)
+        42px;
+}
+
+/* Center s,p,q while keeping the editable number at the right. */
+.warmup-slider-header {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+
+.warmup-slider-name {
+    grid-column: 2;
+    justify-self: center;
+}
+
+.warmup-slider-value {
+    grid-column: 3;
+    justify-self: end;
+    appearance: textfield;
+    -moz-appearance: textfield;
+}
+
+.warmup-slider-value::-webkit-inner-spin-button,
+.warmup-slider-value::-webkit-outer-spin-button {
+    margin: 0;
+    -webkit-appearance: none;
+}
+
+/* Make autoplay visually distinct from the circular drag handles. */
+
+.warmup-play-button {
+    font-size: 10px;
+}
+
+.warmup-play-button:hover {
+    transform: translateY(-1px);
+}
+
+.warmup-reset-button {
+    margin: -1px 0 12px auto;
+    border: 1px solid #d2d2d2;
+    border-radius: 5px;
+    background: #fff;
+    font-family: Arial, Helvetica, sans-serif;
+    cursor: pointer;
+}
+
+.warmup-reset-button:hover {
+    color: #222;
+    border-color: #aaa;
+    background: #fafafa;
+}
+
+/* The complete-picture disclosure is available in every proof mode. */
+.complete-controls-toggle {
+    margin-top: 9px;
+}
+
+/* Larger object-list text and symbols. */
+
+/* We now explicitly wrap the long mathematics, so no horizontal
+   scrollbar should be needed in the proof panel. */
+.warmup-info mjx-container[display="true"] {
+    max-width: 100%;
+    overflow: visible;
+    padding-bottom: 0;
+}
+
+.warmup-info .proof-answer {
+    overflow-x: hidden;
+}
+
+@media (max-width: 1180px) {
+    .app-shell {
+        grid-template-columns:
+            195px
+            minmax(450px, 1fr)
+            320px;
+    }
+
+    .app-shell.warmup-proof-collapsed {
+        grid-template-columns:
+            195px
+            minmax(450px, 1fr)
+            42px;
+    }
+
+    .warmup-info {
+        font-size: 15px;
+    }
+}
+
+/* ============================================================
+   V4.4 — CONTROL LAYOUT + GEOMETRY PANEL
+   ============================================================ */
+
+.control-heading-row {
+    display: flex;
+    align-items: center;
+}
+
+.control-heading-row .nav-heading {
+    margin: 0;
+}
+
+.control-heading-actions {
+    display: flex;
+    align-items: center;
+}
+
+.warmup-reset-button,
+.complete-controls-toggle {
+    margin: 0;
+    height: 25px;
+    padding: 2px 7px;
+    border: 1px solid #d0d0d0;
+    border-radius: 5px;
+    background: #fff;
+    color: #666;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: clamp(10.5px, 0.68vw, 12.5px);
+    line-height: 1;
+    cursor: pointer;
+}
+
+.complete-controls-toggle {
+    width: 27px;
+    padding: 0;
+    font-size: 13px;
+}
+
+.warmup-reset-button:hover,
+.complete-controls-toggle:hover {
+    border-color: #aaa;
+    color: #222;
+    background: #fafafa;
+}
+
+.warmup-parameter-heading-row .geometry-group {
+    margin: 0;
+    min-width: 0;
+}
+
+.warmup-play-button {
+    padding: 0;
+    border-radius: 5px;
+}
+
+.warmup-slider-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 4.8em;
+    align-items: center;
+    gap: 8px;
+}
+
+.warmup-slider-row input[type="range"] {
+    width: 100%;
+    margin: 0;
+}
+
+.warmup-slider-value {
+    width: 100%;
+    min-width: 0;
+}
+
+.warmup-slider-value:hover,
+.warmup-slider-value:focus {
+    border-color: #cfd3d6;
+    background: #fff;
+    outline: none;
+}
+
+/* Return the geometry chooser to the light card treatment. */
+.complete-controls-panel {
+    border: 1px solid #d9d9d9;
+    border-radius: 5px;
+    background: #fff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.complete-control-heading {
+    display: block;
+    margin: 0 0 8px;
+    color: #777;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: clamp(11.5px, 0.76vw, 14px);
+    font-weight: 700;
+    letter-spacing: 0.16em;
+}
+
+.complete-control-subheading {
+    margin-top: 12px;
+}
+
+/* ============================================================
+   V4.4 — PROOF RHYTHM
+   ============================================================ */
+
+.warmup-info .proof-answer .theorem-name {
+    margin-bottom: 0.8em;
+}
+
+/* ============================================================
+   V4.4 — RESPONSIVE SIDE TYPOGRAPHY
+   ============================================================ */
+
+.complete-control-subheading {
+    font-size: clamp(11.5px, 0.76vw, 14px);
+}
+
+/* ============================================================
+   V4.5 — STABLE ADJUSTMENT CONTROLS
+   ============================================================ */
+
+/* Keep ADJUSTMENT, Reset and Stop together on the left. */
+.control-heading-row {
+    justify-content: flex-start;
+}
+
+.warmup-reset-button,
+.warmup-stop-button {
+    height: 25px;
+    margin: 0;
+    padding: 2px 7px;
+    border: 1px solid #d0d0d0;
+    border-radius: 5px;
+    background: #fff;
+    color: #666;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: clamp(10.5px, 0.68vw, 12.5px);
+    line-height: 1;
+    cursor: pointer;
+}
+
+.warmup-reset-button:hover,
+.warmup-stop-button:hover {
+    border-color: #aaa;
+    color: #222;
+    background: #fafafa;
+}
+
+/* Parameter title + animation button form one centered unit. */
+
+.warmup-play-button {
+    flex: 0 0 auto;
+}
+
+/* Keep the native range control fully interactive while Desmos redraws. */
+.warmup-slider-row input[type="range"] {
+    position: relative;
+    z-index: 2;
+    pointer-events: auto !important;
+    min-width: 0;
+    cursor: ew-resize;
+}
+
+/* Angle: only the range is shown, not a live numerical value. */
+
+.warmup-angle-limit {
+    color: #777;
+    font-family: Georgia, "Times New Roman", serif;
+    white-space: nowrap;
+    text-align: center;
+}
+
+/* Translations: slider plus an editable typographic value. */
+
+.warmup-number-editor {
+    display: inline-grid;
+    align-items: center;
+    min-width: 0;
+}
+
+.warmup-value-display,
+.warmup-slider-value {
+    grid-area: 1 / 1;
+    width: 100%;
+    min-width: 0;
+}
+
+.warmup-value-display {
+    color: #666;
+    text-align: right;
+    font-family: Georgia, "Times New Roman", serif;
+    cursor: text;
+}
+
+.warmup-value-display:hover,
+.warmup-value-display:focus {
+    border-color: #cfd3d6;
+    background: #fff;
+    outline: none;
+}
+
+.warmup-slider-value {
+    padding: 2px 4px;
+    border: 1px solid #bfc5ca;
+    border-radius: 3px;
+    background: #fff;
+    color: #444;
+    text-align: right;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: clamp(12px, 0.78vw, 15px);
+}
+
+/* Restore the old disclosure-bar language: a thin rule with a small
+   arrow, rather than another boxed button beside ADJUSTMENT. */
+.geometry-disclosure-toggle {
+    display: block;
+    width: 100%;
+    padding: 0 4px 2px;
+    border: 0;
+    border-top: 1px solid #dddddd;
+    border-radius: 0;
+    background: transparent;
+    color: #777;
+    text-align: right;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.geometry-disclosure-toggle:hover {
+    border-top-color: #c7c7c7;
+    background: transparent;
+    color: #333;
+}
+
+/* A touch larger, with the swatches scaling with the captions. */
+
+.surface-mini {
+    width: 1.75em;
+    height: 1.24em;
+}
+
+.h1-mini,
+.h2-mini {
+    width: 1.68em;
+    height: 1.05em;
+}
+
+.purple-curve-mini,
+.blue-curve-mini,
+.line-mini {
+    width: 1.68em;
+}
+
+.point-mini {
+    width: 0.58em;
+    height: 0.58em;
+}
+
+/* ============================================================
+   WARM-UP: FLOATING DESMOS EQUATION-PANEL TOGGLE
+   ============================================================ */
+
+.desmos-equations-toggle {
+    position: absolute;
+    top: 8px;
+    right: 108px;
+    z-index: 45;
+
+    width: 46px;
+    height: 38px;
+    padding: 0;
+
+    border: 1px solid #d1d1d1;
+    border-radius: 4px;
+    background: rgba(255,255,255,0.95);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.18);
+
+    color: #555;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 19px;
+    line-height: 36px;
+    text-align: center;
+    cursor: pointer;
+}
+
+.desmos-equations-toggle.sidebar-equations-toggle {
+    position: static;
+    display: block;
+    height: auto;
+
+    border-radius: 6px;
+
+    font-family: Arial, Helvetica, sans-serif;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-align: center;
+}
+
+.desmos-equations-toggle:hover,
+.desmos-equations-toggle.active {
+    background: #f2f2f2;
+}
+
+/* ============================================================
+   V4.20 — MODE-AWARE GEOMETRY + COMPACT ADJUSTMENT LAYOUT
+   ============================================================ */
+
+/* In Restriction/Bézout, the Geometry card is a faithful legend:
+   objects not present in that pedagogical picture are omitted. */
+.complete-control-row.mode-object-hidden,
+.complete-control-subheading.mode-object-hidden {
+    display: none !important;
+}
+
+.complete-control-row.mode-readonly {
+    opacity: 1;
+    cursor: default;
+}
+
+.complete-control-row.mode-readonly .complete-control-checkbox {
+    cursor: default;
+}
+
+/* The Desmos equation-panel control now belongs to the Geometry card,
+   so it vanishes automatically whenever Geometry is collapsed. */
+.desmos-equations-toggle.sidebar-equations-toggle {
+    margin: 12px 0 0;
+    width: 100%;
+    border: 1px solid #d4d4d4;
+    background: #fff;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+/* Match the compact adjustment arrangement: title on its own line,
+   then slider/value/endpoints and the play button in one row. */
+
+.warmup-parameter-heading-row .geometry-group {
+    text-align: center;
+}
+
+.warmup-slider-row .warmup-play-button {
+    justify-self: end;
+}
+
+.warmup-value-display {
+    min-height: 25px;
+    padding: 2px 5px;
+    border: 1px solid #d5d5d5;
+    border-radius: 4px;
+    background: #fff;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+/* ============================================================
+   V4.22 — LEGEND / GEOMETRY SWAP
+   ============================================================ */
+
+/* The disclosure is a true swap: when Geometry is open the floating
+   legend is hidden; when Geometry is folded the legend returns.
+   Complete picture is the only mode where the legend stays absent. */
+.scene-label-row[hidden] {
+    display: none !important;
+}
+
+/* ============================================================
+   V4.23 — COMPACT ADJUSTMENT VALUES + KEYBOARD/PANEL POLISH
+   ============================================================ */
+
+/* Translation value sits directly beside its description. */
+.warmup-parameter-heading-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+}
+
+.warmup-parameter-heading-row .geometry-group {
+    flex: 0 0 auto;
+    margin-right: 0;
+}
+
+.warmup-parameter-heading-row .warmup-number-editor {
+    flex: 0 0 auto;
+    display: inline-grid;
+    width: auto;
+    min-width: 2.6em;
+    align-items: baseline;
+}
+
+/* Plain readout: no box until the user actually enters edit mode. */
+.warmup-parameter-heading-row .warmup-value-display {
+    width: auto;
+    min-width: 0;
+    min-height: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    color: #666;
+    font-family: Georgia, "Times New Roman", serif;
+    line-height: 1;
+    text-align: left;
+}
+
+.warmup-parameter-heading-row .warmup-value-display:hover,
+.warmup-parameter-heading-row .warmup-value-display:focus {
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    outline: none;
+}
+
+/* Clicking the readout swaps in the real input, which is visibly editable. */
+.warmup-parameter-heading-row .warmup-slider-value {
+    width: 4.2em;
+    min-width: 4.2em;
+    padding: 2px 5px;
+    border: 1px solid #bfc5ca;
+    border-radius: 4px;
+    background: #fff;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.10);
+    color: #444;
+    text-align: center;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: clamp(12px, 0.76vw, 14px);
+}
+
+/* Once the value has moved to the title row, translations need only
+   the slider and play button on the second line. */
+.warmup-translation-row {
+    grid-template-columns: minmax(0, 1fr) 30px;
+    gap: 7px;
+}
+
+/* ============================================================
+   V4.25 — EXACT AZIMUTH READOUT
+   ============================================================ */
+
+/* The azimuth value appears beside the title only while the control
+   is at rest. JavaScript hides it during dragging, key-repeat, and play. */
+.warmup-angle-value-display {
+    flex: 0 0 auto;
+}
+
+.warmup-angle-value-display[hidden] {
+    display: none !important;
+}
+
+/* ============================================================
+   V4.26 — EDITABLE EXACT AZIMUTH FRACTION
+   ============================================================ */
+
+.warmup-angle-number-editor {
+    flex: 0 0 auto;
+    align-items: center;
+}
+
+.warmup-angle-number-editor[hidden] {
+    display: none !important;
+}
+
+/* Resting angle readout: typography only, like the p/q readouts. */
+.warmup-angle-value-display {
+    grid-area: 1 / 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.16em;
+    min-width: 0;
+    min-height: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    color: #666;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: clamp(12px, 0.76vw, 14px);
+    font-weight: 400;
+    letter-spacing: 0;
+    line-height: 1;
+    white-space: nowrap;
+    cursor: text;
+}
+
+.warmup-angle-value-display:hover,
+.warmup-angle-value-display:focus {
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    outline: none;
+}
+
+.warmup-angle-fraction {
+    display: inline-grid;
+    grid-template-rows: auto auto;
+    align-items: center;
+    justify-items: center;
+    min-width: 1.2em;
+    line-height: 0.88;
+    vertical-align: middle;
+}
+
+.warmup-angle-fraction-num {
+    display: block;
+    width: 100%;
+    padding: 0 0.12em 0.08em;
+    border-bottom: 1px solid currentColor;
+    text-align: center;
+    font-size: 0.82em;
+}
+
+.warmup-angle-fraction-den {
+    display: block;
+    width: 100%;
+    padding: 0.08em 0.12em 0;
+    text-align: center;
+    font-size: 0.82em;
+}
+
+.warmup-angle-sign,
+.warmup-angle-integer,
+.warmup-angle-pi,
+.warmup-angle-zero {
+    display: inline-block;
+}
+
+.warmup-angle-pi {
+    margin-left: 0.02em;
+}
+
+/* Clicked angle readout becomes a real white editor. */
+.warmup-angle-value-input {
+    grid-area: 1 / 1;
+    width: 5.5em !important;
+    min-width: 5.5em !important;
+    padding: 2px 5px !important;
+    border: 1px solid #bfc5ca !important;
+    border-radius: 4px !important;
+    background: #fff !important;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.10) !important;
+    color: #444 !important;
+    text-align: center !important;
+    font-family: Georgia, "Times New Roman", serif !important;
+    font-size: clamp(12px, 0.76vw, 14px) !important;
+}
+
+
+
+/* ============================================================
+   CURRENT EDITABLE DESIGN LAYER (formerly style-v4.48.css)
+   ============================================================ */
+
+/* ============================================================
+   V4.48 — CURRENT EDITABLE DESIGN LAYER
+
+   This file intentionally contains the current UI decisions in one place.
+   The older Desmos/base mechanics live in style-core-v4.48.css.
+   For ordinary visual changes, edit this file rather than the core sheet.
+   ============================================================ */
+
+:root {
+    /* Type */
+    --content-font: Georgia, "Times New Roman", serif;
+    --ui-font: Arial, Helvetica, sans-serif;
+
+    /* Quiet uppercase metadata */
+    --meta-color: #818080;
+    --meta-weight: 600;
+    --meta-spacing: 0.15em;
+
+    /* Layout */
+    --sidebar-min: 248px;
+    --sidebar-fluid: 15.2vw;
+    --sidebar-max: 292px;
+    --scene-min: 760px;
+    --proof-min: 382px;
+    --proof-fluid: 22vw;
+    --proof-max: 430px;
+    --collapsed-proof-width: 42px;
+
+    /* Right-panel question rhythm */
+    --question-intro-gap: 2px;
+    --question-equation-gap: 1px;
+    --question-buttons-gap: 12px;
+}
+
+/* ============================================================
+   1. PAGE / WORKSPACE LAYOUT
+   ============================================================ */
+
+.left-panel {
+    container-type: inline-size;
+    overflow-x: hidden;
+    overflow-y: auto;
+    padding:
+        clamp(10px, 1.45vh, 18px)
+        clamp(10px, 0.85vw, 14px)
+        clamp(10px, 1.45vh, 18px);
+}
+
+.app-shell,
+.app-shell.warmup-proof-collapsed {
+    grid-template-columns:
+        clamp(var(--sidebar-min), var(--sidebar-fluid), var(--sidebar-max))
+        minmax(0, 1fr);
+    overflow: hidden;
+    transition: none;
+}
+
+.workspace-scroll {
+    min-width: 0;
+    min-height: 0;
+    width: 100%;
+    height: 100vh;
+    overflow-x: auto;
+    overflow-y: hidden;
+    overscroll-behavior-x: contain;
+    scrollbar-gutter: auto;
+    background: #fff;
+}
+
+.workspace-track {
+    display: grid;
+    grid-template-columns:
+        minmax(var(--scene-min), 1fr)
+        clamp(var(--proof-min), var(--proof-fluid), var(--proof-max));
+    width: max(100%, calc(var(--scene-min) + var(--proof-min)));
+    min-width: calc(var(--scene-min) + var(--proof-min));
+    height: 100%;
+    min-height: 0;
+    transition: grid-template-columns 0.20s ease;
+}
+
+.app-shell.warmup-proof-collapsed .workspace-track {
+    grid-template-columns:
+        minmax(var(--scene-min), 1fr)
+        var(--collapsed-proof-width);
+    width: max(100%, calc(var(--scene-min) + var(--collapsed-proof-width)));
+    min-width: calc(var(--scene-min) + var(--collapsed-proof-width));
+}
+
+/* The shared workspace owns horizontal panning. */
+.visual-stage {
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+    scrollbar-gutter: auto;
+}
+
+.warmup-view,
+.standard-calculator {
+    min-width: 0;
+}
+
+.right-panel {
+    min-width: 0;
+    min-height: 0;
+    height: 100%;
+    overflow-x: hidden;
+    overflow-y: auto;
+    padding: clamp(16px, 2.05vh, 22px) 22px 18px;
+}
+
+/* ============================================================
+   2. TYPOGRAPHIC SYSTEM
+   ============================================================ */
+
+.surface-button,
+.complete-control-row,
+.warmup-parameter-heading-row .warmup-value-display,
+.warmup-angle-limit,
+.warmup-reset-button,
+.warmup-stop-button,
+.warmup-play-button,
+.desmos-equations-toggle.sidebar-equations-toggle,
+.warmup-info,
+.warmup-info .proof-tab,
+.warmup-info .complete-picture-button {
+    font-family: var(--content-font);
+}
+
+.eyebrow,
+.surface-nav .nav-heading,
+.control-heading-row .nav-heading,
+.warmup-parameter-heading-row .geometry-group,
+.complete-control-heading,
+.complete-control-subheading,
+.surface-type {
+    font-family: var(--ui-font);
+}
+
+/* All grey uppercase metadata uses one clean rule. */
+.eyebrow,
+.surface-nav .nav-heading,
+.surface-type,
+.complete-control-heading,
+.complete-control-subheading,
+.control-heading-row .nav-heading {
+    color: var(--meta-color);
+    font-weight: var(--meta-weight);
+    letter-spacing: var(--meta-spacing);
+}
+
+.surface-nav .nav-heading{
+    letter-spacing: 0.10em;
+}
+
+.site-title {
+    font-size: clamp(22px, 9cqw, 25px);
+    line-height: 1.06;
+    font-weight: 500;
+    letter-spacing: -0.012em;
+}
+
+.eyebrow,
+.surface-nav .nav-heading {
+    font-size: clamp(10.7px, 4.4cqw, 11.9px);
+}
+
+.control-heading-row .nav-heading {
+    font-size: clamp(10px, 4.05cqw, 10.8px);
+    letter-spacing: 0.14em;
+}
+
+/* Navigation choices are content.  The active item is only mildly heavier. */
+.surface-button {
+    white-space: nowrap;
+    font-size: clamp(15.8px, 6.55cqw, 16.7px);
+    line-height: 1.22;
+    padding: clamp(6px, 0.82vh, 8px) 9px;
+}
+
+.surface-button.active {
+    font-weight: 600;
+}
+
+/* ============================================================
+   3. LEFT ADJUSTMENT CONTROLS
+   ============================================================ */
+
+.surface-button,
+.warmup-parameter-heading-row .geometry-group,
+.complete-control-label,
+.complete-control-heading,
+.complete-control-subheading,
+.control-heading-row .nav-heading {
+    white-space: nowrap;
+}
+
+.warmup-parameter-heading-row .geometry-group {
+    font-size: clamp(10.8px, 5.4cqw, 13px);
+    letter-spacing: 0.13em;
+    font-weight: 550;
+}
+
+/* Real subscript, rather than a tiny Unicode glyph. */
+.warmup-control-subscript {
+    display: inline-block;
+    margin-left: 0.03em;
+    font-size: 0.82em;
+    line-height: 1;
+    vertical-align: -0.22em;
+    letter-spacing: 0;
+}
+
+/* Integer part intentionally larger than the decimal part. */
+.warmup-parameter-heading-row .warmup-value-display {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0;
+    font-size: clamp(12px, 5.3cqw, 14px);
+}
+
+.warmup-value-major {
+    font-size: 1.18em;
+    line-height: 1;
+}
+
+.warmup-value-minor {
+    font-size: 0.72em;
+    line-height: 1;
+    opacity: 0.78;
+}
+
+/* Preserve useful azimuth slider length. */
+.warmup-angle-row {
+    grid-template-columns: minmax(0, 1fr) 30px;
+    gap: 7px;
+}
+
+.warmup-angle-track {
+    display: grid;
+    grid-template-columns: 1.65em minmax(88px, 1fr) 1.65em;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
+}
+
+.warmup-angle-limit {
+    min-width: 0;
+    font-size: clamp(10.5px, 4.8cqw, 13px);
+}
+
+/* Vertical rhythm for the left column. */
+.site-heading {
+    margin-bottom: clamp(10px, 1.55vh, 20px);
+}
+
+.nav-heading {
+    margin:
+        clamp(8px, 1.15vh, 14px)
+        0
+        clamp(4px, 0.55vh, 7px);
+}
+
+.geometry-section {
+    margin-top: clamp(9px, 1.2vh, 18px);
+}
+
+.control-heading-row {
+    gap: 5px;
+    margin:
+        clamp(8px, 1.15vh, 14px)
+        0
+        clamp(5px, 0.7vh, 8px);
+}
+
+.control-heading-actions {
+    gap: 5px;
+}
+
+/* Exact Reset / Stop box size requested in v4.47. */
+.warmup-reset-button{
+    padding: 0 6px;
+    border-color: #cdcdcd;
+    color: #5f5f5f;
+    font-size: clamp(11.6px, 4.55cqw, 12.8px);
+    font-weight: 400;
+    line-height: 1;
+}
+
+.warmup-stop-button {
+    height: 22px;
+    padding: 1px 5px;
+    border-color: #cdcdcd;
+    color: #5f5f5f;
+    font-size: clamp(11px, 4.55cqw, 12.2px);
+    font-weight: 400;
+    line-height: 1;
+    display: inline-flex;
+    justify-content: center;
+    gap: 3px;
+}
+
+.warmup-stop-icon {
+    position: relative;
+    display: inline-block;
+}
+
+.warmup-stop-icon::before {
+    content: "";
+    position: absolute;
+}
+
+.warmup-stop-button.continue-mode .warmup-stop-icon::before {
+    border-top: 0.31em solid transparent;
+    border-bottom: 0.31em solid transparent;
+    border-left: 0.48em solid currentColor;
+}
+
+.warmup-slider {
+    margin:
+        clamp(6px, 0.8vh, 10px)
+        0
+        clamp(7px, 0.95vh, 12px);
+}
+
+.warmup-parameter-heading-row {
+    gap: 4px;
+    margin-bottom: clamp(3px, 0.45vh, 5px);
+}
+
+/* Keep the azimuth fraction slightly below the H_1 label.  In particular,
+   lower the negative readout too, so the minus sign cannot be mistaken for
+   part of the heading ("H_1 - ...").  Positive values keep their existing
+   visual height. */
+.warmup-angle-value-display.warmup-angle-positive {
+    transform: none;
+}
+
+.warmup-angle-value-display.warmup-angle-negative {
+    transform: translateY(0.08em);
+}
+
+.warmup-play-button {
+    width: 30px;
+    height: clamp(22px, 2.75vh, 24px);
+}
+
+.geometry-disclosure-toggle {
+    height: clamp(18px, 2.3vh, 22px);
+    margin: 2px 0 4px;
+}
+
+/* ============================================================
+   4. GEOMETRY CARD / CHECKBOXES
+   ============================================================ */
+
+.complete-controls-panel {
+    margin: 5px 0 7px;
+    padding:
+        clamp(6px, 0.75vh, 9px)
+        7px
+        clamp(6px, 0.8vh, 9px);
+}
+
+.complete-control-heading {
+    margin-bottom: clamp(5px, 0.6vh, 8px);
+}
+
+.complete-control-subheading {
+    margin:
+        clamp(7px, 0.9vh, 10px)
+        0
+        clamp(4px, 0.5vh, 6px);
+}
+
+/* GEOMETRY and xy PROJECTION now use the same font and size as the
+   adjustment descriptors; projection is no longer visually larger. */
+.complete-control-heading,
+.complete-control-subheading {
+    font-family: var(--ui-font);
+    font-size: clamp(10.8px, 5.4cqw, 13px);
+}
+
+.complete-control-row {
+    grid-template-columns:
+        1.02em
+        1.72em
+        minmax(0, 1fr);
+    gap: 0.38em;
+    margin: clamp(3px, 0.48vh, 5px) 0;
+    font-size: clamp(15px, 6.7cqw, 18.2px);
+    line-height: 1.03;
+}
+
+.projection-control-row {
+    grid-template-columns:
+        1.02em
+        minmax(0, 1fr);
+}
+
+.complete-control-label {
+    min-width: 0;
+    overflow-wrap: normal;
+}
+
+/* Geometry captions are typeset as math, matching the floating scene legend.
+   Keep the row's existing size; only the typeface/subscript construction changes. */
+.complete-control-label mjx-container {
+    margin: 0 !important;
+    font-size: 1em !important;
+}
+
+.complete-control-label mjx-script {
+    font-size: 0.92em !important;
+}
+
+.complete-control-check {
+    width: 0.92em;
+    height: 0.92em;
+    align-self: center;
+    justify-self: center;
+}
+
+.complete-control-checkbox:checked + .complete-control-check::after {
+    left: 50%;
+    top: 46%;
+    width: 0.25em;
+    height: 0.48em;
+    border-right-width: 0.12em;
+    border-bottom-width: 0.12em;
+    transform: translate(-50%, -50%) rotate(45deg);
+    transform-origin: center;
+}
+
+/* Taller than the old flat strip, while still subordinate to Geometry. */
+.desmos-equations-toggle.sidebar-equations-toggle {
+    min-height: 32px;
+    margin-top: clamp(7px, 0.9vh, 10px);
+    padding: 6px 8px;
+    font-size: clamp(10px, 4.6cqw, 12px);
+    line-height: 1.25;
+}
+
+.desmos-equations-toggle.sidebar-equations-toggle.full-screen-required {
+    color: #777;
+    background: #fafafa;
+}
+
+.warmup-ui-hint {
+    position: fixed;
+    z-index: 10000;
+    max-width: min(280px, calc(100vw - 16px));
+    padding: 6px 9px;
+    border: 1px solid #cfcfcf;
+    border-radius: 3px;
+    background: #fff;
+    box-shadow: 0 2px 7px rgba(0, 0, 0, 0.16);
+    color: #333;
+    font-family: var(--ui-font);
+    font-size: 12px;
+    line-height: 1.3;
+    pointer-events: none;
+}
+
+/* ============================================================
+   5. RIGHT PANEL
+   ============================================================ */
+
+.warmup-info {
+    font-size: clamp(16px, 1.02vw, 17.5px);
+    line-height: 1.38;
+
+    width: 100%;
+    margin: 0;
+    box-sizing: border-box;
+}
+
+.warmup-info h2 {
+    margin: 0 0 9px !important;
+    font-size: clamp(22px, 1.48vw, 25px) !important;
+    line-height: 1.08;
+    font-weight: 500;
+    letter-spacing: -0.012em;
+}
+
+/* Match the left-hand grey metadata exactly, including its weight. */
+.warmup-info .surface-type {
+    margin: 0 0 10px;
+    color: var(--meta-color);
+    font-size: 0.70em;
+    font-weight: var(--meta-weight);
+    line-height: 1;
+    letter-spacing: var(--meta-spacing);
+}
+
+.warmup-info p {
+    margin: 0.42em 0 !important;
+    font-size: 1em !important;
+    line-height: 1.40 !important;
+}
+
+/* Intro -> “Why is” is the first of the three question gaps. */
+.warmup-info .warmup-intro {
+    margin: 0.42em 0 0 !important;
+    line-height: 1.40 !important;
+}
+
+.warmup-info .proof-question {
+    margin: var(--question-intro-gap) 0 0;
+}
+
+/* “Why is” -> equation is intentionally the smallest gap. */
+.warmup-info .proof-question-title {
+    margin-bottom: 0 !important;
+    font-size: 1em;
+}
+
+.warmup-info .proof-question mjx-container[display="true"] {
+    margin:
+        var(--question-equation-gap)
+        0
+        0 !important;
+}
+
+/* Equation -> buttons is the largest gap and at least one text line high. */
+.warmup-info .proof-tabs {
+    gap: 9px;
+    margin: var(--question-buttons-gap) 0 10px;
+
+    display: flex;
+    justify-content: center;
+}
+
+.warmup-info .proof-tab,
+.warmup-info .complete-picture-button {
+    padding: 6px 11px;
+    font-size: 0.96em;
+    line-height: 1.15;
+}
+
+.warmup-info .complete-picture-button {
+    width: 100%;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+.warmup-info .proof-answer.active {
+    margin-top: 8px;
+    padding-left: 14px;
+    border-left: 2px solid #aaa;
+}
+
+.warmup-info .proof-answer .theorem-name {
+    margin: 0 0 6px;
+    font-size: 0.98em;
+    font-style: italic;
+    font-weight: 400;
+}
+
+.warmup-info .proof-answer p {
+    margin: 0.42em 0 !important;
+    line-height: 1.40 !important;
+}
+
+.warmup-info .proof-answer mjx-container[display="true"] {
+    margin: 0.48em 0 !important;
+}
+
+.warmup-info .proof-note {
+    margin-top: 8px;
+    padding-top: 7px;
+    font-size: 0.74em;
+    line-height: 1.30;
+}
+
+.complete-picture-wrap {
+    margin-top: 10px;
+    padding-top: 9px;
+}
+
+/* ============================================================
+   6. RESPONSIVE LAPTOP / NARROW-WINDOW RULES
+   ============================================================ */
+
+/* 14-inch laptop: keep the same hierarchy, but fit the proof through
+   width and rhythm rather than making it look like the 27-inch version
+   has merely been scaled down. */
+@media (max-height: 820px) and (max-width: 1600px) {
+    .left-panel {
+        padding-top: 8px;
+        padding-bottom: 8px;
+    }
+
+    .site-heading {
+        margin-bottom: 8px;
+    }
+
+    .nav-heading {
+        margin-top: 7px;
+        margin-bottom: 3px;
+    }
+
+    .surface-button {
+        font-size: clamp(15.6px, 6.4cqw, 16.4px);
+        padding-top: 6px;
+        padding-bottom: 6px;
+    }
+
+    .geometry-section {
+        margin-top: 7px;
+    }
+
+    .control-heading-row {
+        margin-top: 7px;
+        margin-bottom: 4px;
+    }
+
+    .warmup-slider {
+        margin: 5px 0 7px;
+    }
+
+    .complete-control-row {
+        margin: 2px 0;
+        font-size: clamp(14.5px, 7.1cqw, 18px);
+    }
+
+    .complete-control-subheading {
+        margin: 6px 0 3px;
+    }
+
+    .complete-controls-panel {
+        margin-top: 4px;
+        padding-top: 5px;
+        padding-bottom: 5px;
+    }
+
+    .desmos-equations-toggle.sidebar-equations-toggle {
+        min-height: 31px;
+        margin-top: 6px;
+        padding-top: 6px;
+        padding-bottom: 6px;
+    }
+
+    .right-panel {
+        padding: 14px 18px 12px;
+        box-sizing: border-box;
+    }
+
+    .warmup-info {
+        font-size: clamp(15.5px, 1vw, 16.8px);
+        line-height: 1.35;
+    }
+
+    .warmup-info h2 {
+        margin-bottom: 5px !important;
+        font-size: clamp(21px, 1.43vw, 23.5px) !important;
+    }
+
+    .warmup-info .surface-type {
+        margin-bottom: 10px;
+    }
+
+    .warmup-info p,
+    .warmup-info .warmup-intro {
+        line-height: 1.35 !important;
+    }
+
+    .warmup-info .proof-answer.active {
+        margin-top: 8px;
+        padding-left: 13px;
+        border-left: 2px solid #aaa;
+    }
+
+    .warmup-info .proof-answer p {
+        margin: 0.32em 0 !important;
+        line-height: 1.33 !important;
+    }
+
+    .warmup-info .proof-answer mjx-container[display="true"] {
+        margin: 0.36em 0 !important;
+    }
+
+    .warmup-info .proof-note {
+        margin-top: 6px;
+        padding-top: 6px;
+        line-height: 1.27;
+    }
+
+    .complete-picture-wrap {
+        margin-top: 8px;
+        padding-top: 7px;
+    }
+}
+
+/* Narrow browser widths pan the whole 3D + question workspace instead of
+   squeezing the main 3D scene. */
+@media (max-width: 1180px) {
+    .app-shell,
+    .app-shell.warmup-proof-collapsed {
+        grid-template-columns:
+            240px
+            minmax(0, 1fr);
+    }
+
+    .workspace-track {
+        grid-template-columns:
+            minmax(var(--scene-min), 1fr)
+            var(--proof-min);
+        width: max(100%, calc(var(--scene-min) + var(--proof-min)));
+        min-width: calc(var(--scene-min) + var(--proof-min));
+    }
+
+    .app-shell.warmup-proof-collapsed .workspace-track {
+        grid-template-columns:
+            minmax(var(--scene-min), 1fr)
+            var(--collapsed-proof-width);
+        width: max(100%, calc(var(--scene-min) + var(--collapsed-proof-width)));
+        min-width: calc(var(--scene-min) + var(--collapsed-proof-width));
+    }
+}
+.keep-together {
+    white-space: nowrap;
+}
+
+/* ============================================================
+   V4.53 — INTERACTION POLISH
+   ============================================================ */
+
+/* The small 2D cards keep the Desmos + / − / home controls available,
+   but the native pillbox is hidden until JavaScript reveals the upper-right
+   hover zone.  The broader selector covers the current Desmos API DOM. */
+.projection .dcg-right-pillbox-elements,
+.projection .dcg-zoom-container,
+.projection .dcg-zoom-buttons-container {
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    transform: scale(0.72) !important;
+    transform-origin: top right !important;
+    transition: opacity 0.12s ease !important;
+}
+
+.projection.projection-controls-visible .dcg-right-pillbox-elements,
+.projection.projection-controls-visible .dcg-zoom-container,
+.projection.projection-controls-visible .dcg-zoom-buttons-container {
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+}
+
+/* Global Stop / Continue: keep the icon optically centered and slightly
+   smaller than the text rather than riding high on the baseline. */
+.warmup-stop-icon {
+    flex-basis: 0.62em;
+}
+
+.warmup-stop-button.continue-mode .warmup-stop-icon::before {
+    border-top-width: 0.26em;
+    border-bottom-width: 0.26em;
+    border-left-width: 0.40em;
+}
+
+/* Read the angle as one phrase:
+      AZIMUTH ANGLE  <value>  OF H_1
+   This removes the visual ambiguity between a negative value and “H_1 - …”. */
+.warmup-angle-heading-row {
+    align-items: center !important;
+    gap: 4px;
+}
+
+.warmup-angle-heading-row .geometry-group,
+.warmup-angle-heading-row .warmup-angle-number-editor,
+.warmup-angle-heading-row .warmup-angle-value-display {
+    align-self: center;
+}
+
+.warmup-angle-heading-row .warmup-angle-value-display,
+.warmup-angle-value-display.warmup-angle-positive,
+.warmup-angle-value-display.warmup-angle-negative {
+    transform: none !important;
+}
+
+.warmup-angle-heading-suffix {
+    margin-left: 0;
+}
+
+/* Projection captions: force the second projection to use the blue curve
+   color even after MathJax replaces the textual label with its own nodes. */
+.blue-projection-label,
+.blue-projection-label mjx-container,
+.blue-projection-label mjx-container * {
+    color: #009FE3 !important;
+}
+
+.purple-projection-label,
+.purple-projection-label mjx-container,
+.purple-projection-label mjx-container * {
+    color: #A944A7 !important;
+}
+
+/* ============================================================
+   V4.54 — STOP / CONTINUE ICON OPTICAL ALIGNMENT
+   ============================================================ */
+
+/* Keep the icon box and the word centered by the same flex line. */
+.warmup-stop-button {
+    align-items: center;
+}
+
+.warmup-stop-text {
+    display: inline-flex;
+    align-items: center;
+    line-height: 1;
+}
+
+.warmup-stop-icon {
+    flex: 0 0 0.66em;
+    width: 0.66em;
+    height: 0.66em;
+    transform: none;
+    align-self: center;
+}
+
+/* Stop: a clearly square mark rather than a tiny rectangular-looking glyph. */
+.warmup-stop-icon::before {
+    left: 50%;
+    top: 50%;
+    width: 0.46em;
+    height: 0.46em;
+    border: 0;
+    background: currentColor;
+    clip-path: none;
+    -webkit-clip-path: none;
+    transform: translate(-50%, -50%);
+}
+
+/* Continue: use a clipped block instead of CSS borders, so its visual box
+   is vertically centered exactly like the text beside it. */
+.warmup-stop-button.continue-mode .warmup-stop-icon::before {
+    width: 0.48em;
+    height: 0.58em;
+    border: 0;
+    background: currentColor;
+    clip-path: polygon(0 0, 100% 50%, 0 100%);
+    -webkit-clip-path: polygon(0 0, 100% 50%, 0 100%);
+    transform: translate(-46%, -50%);
+}
+
+
+/* ============================================================
+   V4.56 — STABLE AZIMUTH READOUT + RESET OPTICAL CENTERING
+   ============================================================ */
+
+/* Keep a fixed slot for the exact fraction even while keyboard repeat,
+   dragging, or playback temporarily suppresses the readout.  This prevents
+   AZIMUTH ANGLE / OF H_1 and the slider below from jumping as the fraction
+   changes between one-line and two-line forms. */
+.warmup-angle-number-editor {
+    width: 2.8em;
+    min-width: 2.8em;
+    height: 1.85em;
+    min-height: 1.85em;
+    display: inline-grid;
+    place-items: center;
+}
+
+/* The fraction looked optically a little low beside the uppercase heading.
+   Move only the visible/editor contents, not the reserved layout slot. */
+.warmup-angle-heading-row .warmup-angle-value-display {
+    transform: translateY(-0.08em) !important;
+}
+
+.warmup-angle-heading-row .warmup-angle-value-input {
+    transform: translateY(-0.08em);
+}
+
+/* Reset keeps its established 22 px box, but its glyph/text line is centered
+   vertically instead of being positioned by asymmetric padding. */
+.warmup-reset-button {
+    height: 22px;
+    padding-top: 0;
+    padding-bottom: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ============================================================
+   V4.57 — AZIMUTH READOUT: COLLAPSE HORIZONTALLY WHILE ADJUSTING
+   ============================================================ */
+
+/* Keep the row tall enough for the tallest fraction even when the exact
+   angle is temporarily hidden.  This is the vertical reservation that
+   prevents keyboard ←/→ interaction from making the controls jump. */
+.warmup-angle-heading-row {
+    min-height: 1.85em;
+}
+
+/* When playing, dragging, or holding ←/→, remove the number's horizontal
+   footprint completely — the old compact pattern: AZIMUTH ANGLE OF H_1.
+   Keep only its height so the row itself never jumps vertically. */
+.warmup-angle-number-editor.warmup-angle-readout-hidden {
+    width: 0;
+    min-width: 0;
+    height: 1.85em;
+    min-height: 1.85em;
+    overflow: hidden;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+/* The exact value returns only after the interaction stops. */
+.warmup-angle-number-editor:not(.warmup-angle-readout-hidden) {
+    width: 2.8em;
+    min-width: 2.8em;
+}
+
+
+/* ============================================================
+   V4.59 — CLICKABLE 2D DESMOS CONTROLS
+   ============================================================ */
+
+/* v4.53 hid the native control containers correctly, but Desmos can nest
+   clickable buttons inside those containers.  Restore pointer events all the
+   way down while the reveal class is active; otherwise the controls may look
+   visible yet ignore clicks. */
+.projection .dcg-right-pillbox-elements button,
+.projection .dcg-right-pillbox-elements [role="button"],
+.projection .dcg-right-pillbox-elements .dcg-btn,
+.projection .dcg-zoom-container button,
+.projection .dcg-zoom-container [role="button"],
+.projection .dcg-zoom-container .dcg-btn,
+.projection .dcg-zoom-buttons-container button,
+.projection .dcg-zoom-buttons-container [role="button"],
+.projection .dcg-zoom-buttons-container .dcg-btn {
+    pointer-events: none !important;
+}
+
+.projection.projection-controls-visible
+    .dcg-right-pillbox-elements button,
+.projection.projection-controls-visible
+    .dcg-right-pillbox-elements [role="button"],
+.projection.projection-controls-visible
+    .dcg-right-pillbox-elements .dcg-btn,
+.projection.projection-controls-visible
+    .dcg-zoom-container button,
+.projection.projection-controls-visible
+    .dcg-zoom-container [role="button"],
+.projection.projection-controls-visible
+    .dcg-zoom-container .dcg-btn,
+.projection.projection-controls-visible
+    .dcg-zoom-buttons-container button,
+.projection.projection-controls-visible
+    .dcg-zoom-buttons-container [role="button"],
+.projection.projection-controls-visible
+    .dcg-zoom-buttons-container .dcg-btn {
+    pointer-events: auto !important;
+}
+
+/* Avoid a double 0.72 × 0.72 transform when current Desmos nests a zoom
+   container inside the right pillbox. */
+.projection .dcg-right-pillbox-elements {
+    transform: scale(0.72) !important;
+    transform-origin: top right !important;
+}
+
+.projection .dcg-right-pillbox-elements .dcg-zoom-container,
+.projection .dcg-right-pillbox-elements .dcg-zoom-buttons-container {
+    transform: none !important;
+}
+
+/* ============================================================
+   V4.61 — EDITABLE TRANSLATION VALUE VISIBILITY
+   ============================================================ */
+
+/* The translation value uses two overlapping layers: a typographic readout
+   at rest and a real text input while editing.  Later display rules use
+   inline-flex / grid, so make the HTML hidden state authoritative. */
+.warmup-parameter-heading-row .warmup-value-display[hidden],
+.warmup-parameter-heading-row .warmup-slider-value[hidden] {
+    display: none !important;
+}
+
+/* ============================================================
+   V4.62 — WARM-UP 3D NATIVE CONTROLS ON HOVER
+   ============================================================ */
+
+/* Only the warm-up 3D calculator gets this treatment.  Its native Desmos
+   settings/view/zoom toolbar is hidden until JavaScript reveals the
+   upper-right control corner.  The expression drawer and its » handle are
+   intentionally not targeted. */
+#warmup-calculator .dcg-right-pillbox-elements,
+#warmup-calculator .dcg-zoom-container,
+#warmup-calculator .dcg-zoom-buttons-container,
+#warmup-calculator .dcg-settings-pillbox,
+#warmup-calculator .dcg-settings-container {
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    transition: opacity 0.12s ease !important;
+}
+
+#warmup-calculator.warmup-3d-controls-visible .dcg-right-pillbox-elements,
+#warmup-calculator.warmup-3d-controls-visible .dcg-zoom-container,
+#warmup-calculator.warmup-3d-controls-visible .dcg-zoom-buttons-container,
+#warmup-calculator.warmup-3d-controls-visible .dcg-settings-pillbox,
+#warmup-calculator.warmup-3d-controls-visible .dcg-settings-container {
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+}
+
+
+/* ============================================================
+   V10 — CLEBSCH 27-LINE / DOUBLE-SIX CONTROLS
+   ============================================================ */
+
+.clebsch-subbutton {
+    display: block;
+    margin: -2px 0 8px 28px;
+    padding: 3px 8px;
+    border: 1px solid #d5d5d5;
+    border-radius: 5px;
+    background: #fff;
+    color: #555;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 11px;
+    cursor: pointer;
+}
+
+.clebsch-subbutton:hover:not(:disabled),
+.clebsch-subbutton.active {
+    background: #f1f1f1;
+    border-color: #bcbcbc;
+}
+
+.clebsch-subbutton:disabled {
+    opacity: 0.45;
+    cursor: default;
+}
+
+
+/* ============================================================
+   CLEBSCH — BITANGENT AND LINE-THROUGH-P CONTROLS
+   ============================================================ */
+
+.clebsch-schlafli-selector {
+    --schlafli-color: #b8b8b8;
+    position: relative;
+    display: block;
+    width: 154px;
+    height: 154px;
+    box-sizing: border-box;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 50%;
+    background: var(--schlafli-color);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28);
+    color: #fff;
+    font-family: Arial, Helvetica, sans-serif;
+    touch-action: manipulation;
+    transition: background-color 0.16s ease, opacity 0.16s ease;
+}
+
+.clebsch-schlafli-selector.disabled {
+    background: #b8b8b8;
+    box-shadow: none;
+    opacity: 0.58;
+}
+
+.clebsch-schlafli-core {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    z-index: 2;
+    display: flex;
+    width: 64px;
+    height: 64px;
+    flex-direction: column;
+    align-items: center;
+    gap: 1px;
+    justify-content: center;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.95);
+    color: var(--schlafli-color);
+    transform: translate(-50%, -50%);
+}
+
+.clebsch-schlafli-notation {
+    min-width: 39px;
+    padding: 0 4px 1px;
+    border-bottom: 1px solid currentColor;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 21px;
+    font-style: italic;
+    line-height: 1;
+    text-align: center;
+}
+
+.clebsch-schlafli-notation sub {
+    margin-left: 1px;
+    font-size: 11px;
+    font-style: normal;
+    vertical-align: -0.35em;
+}
+
+/* Compact family-colored Play/Pause below the selected (-1)-curve. */
+.clebsch-schlafli-play {
+    display: grid;
+    place-items: center;
+    width: 22px;
+    height: 22px;
+    flex: 0 0 22px;
+    padding: 0;
+    border: 1px solid transparent;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--schlafli-color);
+    cursor: pointer;
+    touch-action: manipulation;
+}
+.clebsch-schlafli-play:hover:not(:disabled) {
+    border-color: currentColor;
+    background: rgba(128, 128, 128, 0.08);
+}
+.clebsch-schlafli-play:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: 1px;
+}
+.clebsch-schlafli-play:disabled {
+    opacity: 0.45;
+    cursor: default;
+}
+.clebsch-schlafli-play-icon {
+    width: 17px;
+    height: 17px;
+    fill: currentColor;
+}
+.clebsch-schlafli-pause-glyph,
+.clebsch-schlafli-play.playing .clebsch-schlafli-play-glyph {
+    display: none;
+}
+.clebsch-schlafli-play.playing .clebsch-schlafli-pause-glyph {
+    display: initial;
+}
+
+
+.clebsch-schlafli-families {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    margin: 0;
+    pointer-events: none;
+}
+
+.clebsch-schlafli-family-button,
+.clebsch-schlafli-index {
+    padding: 0;
+    border: 1.5px solid rgba(255, 255, 255, 0.82);
+    cursor: pointer;
+    text-align: center;
+    touch-action: manipulation;
+}
+
+.clebsch-schlafli-family-button {
+    --family-color: #777;
+    --ring-x: 0px;
+    --ring-y: 0px;
+    --heart-rotation: 0deg;
+    position: absolute;
+    top: calc(50% + var(--ring-y));
+    left: calc(50% + var(--ring-x));
+    width: 38px;
+    height: 38px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--family-color);
+    font-size: 12.5px;
+    font-weight: 700;
+    pointer-events: auto;
+    transform: translate(-50%, -50%);
+}
+
+.clebsch-schlafli-family-heart {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 38px;
+    height: 36px;
+    overflow: visible;
+    transform:
+        translate(-50%, -50%)
+        rotate(var(--heart-rotation));
+    pointer-events: none;
+}
+
+.clebsch-schlafli-family-heart-shape {
+    fill: rgba(255, 255, 255, 0.96);
+    stroke: rgba(255, 255, 255, 0.98);
+    stroke-width: 1.15;
+    vector-effect: non-scaling-stroke;
+    filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.08));
+    transition:
+        fill 0.14s ease,
+        transform 0.14s ease;
+    transform-box: fill-box;
+    transform-origin: center;
+}
+
+.clebsch-schlafli-family-button span {
+    position: absolute;
+    top: 47%;
+    left: 50%;
+    z-index: 1;
+    line-height: 1;
+    transform:
+        translate(-50%, -50%)
+        rotate(var(--heart-rotation));
+    pointer-events: none;
+}
+
+.clebsch-schlafli-family-button.family-E {
+    --family-color: #FFAB00;
+    --ring-x: -34.1px;
+    --ring-y: -40.6px;
+    --heart-rotation: -40deg;
+}
+
+.clebsch-schlafli-family-button.family-L {
+    --family-color: #009FE3;
+    --ring-x: 0px;
+    --ring-y: -53px;
+}
+
+.clebsch-schlafli-family-button.family-C {
+    --family-color: #FC767A;
+    --ring-x: 34.1px;
+    --ring-y: -40.6px;
+    --heart-rotation: 40deg;
+}
+
+.clebsch-schlafli-family-button.active {
+    color: #fff;
+}
+
+.clebsch-schlafli-family-button.active
+    .clebsch-schlafli-family-heart-shape {
+    fill: var(--family-color);
+    stroke: rgba(255, 255, 255, 0.98);
+}
+
+.clebsch-schlafli-index {
+    position: absolute;
+    z-index: 3;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.92);
+    color: #555;
+    font-size: 12px;
+    line-height: 25px;
+}
+
+.clebsch-schlafli-index.active {
+    border-color: #fff;
+    background: rgba(40, 40, 40, 0.34);
+    color: #fff;
+}
+
+.clebsch-schlafli-index {
+    --ring-x: 0px;
+    --ring-y: 0px;
+    top: calc(50% + var(--ring-y));
+    left: calc(50% + var(--ring-x));
+    transform: translate(-50%, -50%);
+}
+
+.clebsch-schlafli-index.index-1 {
+    --ring-x: -52.2px;
+    --ring-y: -9.2px;
+}
+
+.clebsch-schlafli-index.index-2 {
+    --ring-x: 52.2px;
+    --ring-y: -9.2px;
+}
+
+.clebsch-schlafli-index.index-3 {
+    --ring-x: -45.9px;
+    --ring-y: 26.5px;
+}
+
+.clebsch-schlafli-index.index-4 {
+    --ring-x: 45.9px;
+    --ring-y: 26.5px;
+}
+
+.clebsch-schlafli-index.index-5 {
+    --ring-x: -18.1px;
+    --ring-y: 49.8px;
+}
+
+.clebsch-schlafli-index.index-6 {
+    --ring-x: 18.1px;
+    --ring-y: 49.8px;
+}
+
+.clebsch-schlafli-family-button:hover:not(:disabled)
+    .clebsch-schlafli-family-heart-shape {
+    transform: scale(1.05);
+}
+
+.clebsch-schlafli-index:hover:not(:disabled) {
+    border-color: #fff;
+}
+
+.clebsch-schlafli-family-button:focus-visible,
+.clebsch-schlafli-index:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: 2px;
+}
+
+.clebsch-schlafli-family-button:disabled,
+.clebsch-schlafli-index:disabled {
+    cursor: default;
+}
+
+.clebsch-line-controls {
+    margin: -1px 0 11px 28px;
+    padding: 7px 8px 8px;
+    border-left: 2px solid rgba(169, 68, 167, 0.26);
+    font-family: Arial, Helvetica, sans-serif;
+    transition: opacity 0.15s ease;
+}
+
+.clebsch-line-controls.disabled {
+    opacity: 0.45;
+}
+
+.clebsch-line-angle + .clebsch-line-angle {
+    margin-top: 8px;
+}
+
+.clebsch-line-angle-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 3px;
+    color: #666;
+    font-size: 11px;
+}
+
+.clebsch-line-number-editor {
+    display: inline-flex;
+    min-width: 48px;
+    justify-content: flex-end;
+    align-items: center;
+}
+
+.clebsch-line-angle-value {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: #A71912;
+    font: inherit;
+    font-variant-numeric: tabular-nums;
+    cursor: text;
+}
+
+.clebsch-line-angle-value:hover:not(:disabled) {
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+.clebsch-line-angle-input {
+    width: 52px;
+    box-sizing: border-box;
+    padding: 1px 3px;
+    border: 1px solid #c9c9c9;
+    border-radius: 3px;
+    background: #fff;
+    color: #A71912;
+    font: inherit;
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+}
+
+.clebsch-line-angle-input[hidden] {
+    display: none !important;
+}
+
+.clebsch-line-angle-row {
+    display: grid;
+    grid-template-columns: auto minmax(54px, 1fr) auto 25px;
+    gap: 5px;
+    align-items: center;
+    color: #888;
+    font-size: 9px;
+}
+
+.clebsch-line-angle-row input[type="range"] {
+    position: relative;
+    z-index: 3;
+    width: 100%;
+    min-width: 0;
+    height: 22px;
+    margin: 0;
+    padding: 0;
+    accent-color: #A71912;
+    cursor: ew-resize;
+    pointer-events: auto !important;
+    touch-action: none;
+    user-select: none;
+}
+
+.clebsch-line-play {
+    width: 25px;
+    height: 22px;
+    padding: 0;
+    border: 1px solid rgba(167, 25, 18, 0.42);
+    border-radius: 4px;
+    background: #fff;
+    color: #A71912;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 10px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.clebsch-line-play:hover:not(:disabled) {
+    border-color: #A71912;
+}
+
+.clebsch-line-play.playing {
+    border-color: #A71912;
+    background: #A71912;
+    color: #fff;
+}
+
+.clebsch-line-play:disabled,
+.clebsch-line-angle-row input[type="range"]:disabled {
+    cursor: default;
+}
+
+
+/* ============================================================
+   SHARED PROOF TYPOGRAPHY — PAGE 1 + PAGE 2
+   Page 1 is the visual reference. Both pages use this layer.
+   ============================================================ */
+
+.proof-info {
+    width: 100%;
+    margin: 0;
+    box-sizing: border-box;
+    font-family: var(--content-font);
+    font-size: clamp(16px, 1.02vw, 17.5px);
+    line-height: 1.38;
+}
+
+.proof-info h2 {
+    margin: 0 0 9px !important;
+    font-size: clamp(22px, 1.48vw, 25px) !important;
+    line-height: 1.08;
+    font-weight: 500;
+    letter-spacing: -0.012em;
+}
+
+.proof-info .surface-type {
+    margin: 0 0 10px;
+    color: var(--meta-color);
+    font-size: 0.70em;
+    font-weight: var(--meta-weight);
+    line-height: 1;
+    letter-spacing: var(--meta-spacing);
+}
+
+.proof-info p,
+.proof-info .proof-intro {
+    margin: 0.42em 0 !important;
+    font-size: 1em !important;
+    line-height: 1.40 !important;
+}
+
+.proof-info .proof-question {
+    margin-top: var(--question-intro-gap);
+}
+
+.proof-info .proof-question-title {
+    margin-bottom: 0 !important;
+    font-size: 1em;
+}
+
+.proof-info .proof-tabs {
+    gap: 9px;
+    margin: var(--question-buttons-gap) 0 10px;
+}
+
+.proof-info .proof-tab,
+.proof-info .complete-picture-button {
+    padding: 6px 11px;
+    font-size: 0.96em;
+    line-height: 1.15;
+}
+
+.proof-info .proof-answer.active {
+    margin-top: 8px;
+    padding-left: 14px;
+    border-left: 2px solid #aaa;
+}
+
+.proof-info .proof-answer .theorem-name {
+    margin: 0 0 6px;
+    font-size: 0.98em;
+    font-style: italic;
+    font-weight: 400;
+}
+
+.proof-info .proof-answer p {
+    margin: 0.42em 0 !important;
+    font-size: 1em !important;
+    line-height: 1.40 !important;
+}
+
+.proof-info .proof-answer mjx-container[display="true"] {
+    margin: 0.48em 0 !important;
+}
+
+.proof-info .proof-note {
+    margin-top: 8px;
+    padding-top: 7px;
+    font-size: 0.74em;
+    line-height: 1.30;
+}
+
+@media (max-height: 820px) and (max-width: 1600px) {
+    .proof-info {
+        font-size: clamp(15.5px, 1vw, 16.8px);
+        line-height: 1.35;
+    }
+
+    .proof-info h2 {
+        margin-bottom: 5px !important;
+        font-size: clamp(21px, 1.43vw, 23.5px) !important;
+    }
+
+    .proof-info p,
+    .proof-info .proof-intro {
+        line-height: 1.35 !important;
+    }
+
+    .proof-info .proof-answer.active {
+        margin-top: 8px;
+        padding-left: 13px;
+        border-left: 2px solid #aaa;
+    }
+
+    .proof-info .proof-answer p {
+        margin: 0.32em 0 !important;
+        line-height: 1.33 !important;
+    }
+
+    .proof-info .proof-answer mjx-container[display="true"] {
+        margin: 0.36em 0 !important;
+    }
+
+    .proof-info .proof-note {
+        margin-top: 6px;
+        padding-top: 6px;
+        line-height: 1.27;
+    }
+}
+
+/* ============================================================
+   PAGE 2 — TYPOGRAPHY SCALE
+   One source of truth for Page 2 text sizing.
+   ============================================================ */
+
+:root {
+    --p2-type-xs: 11.5px;
+    --p2-type-sm: 13px;
+    --p2-type-md: 15.5px;
+    --p2-type-reading: clamp(16px, 1.02vw, 17.5px);
+    --p2-type-lg: 18px;
+    --p2-type-xl: 22px;
+    --p2-line-body: 1.50;
+    --p2-line-compact: 1.18;
+}
+
+/* ============================================================
+   PAGE 2 — PAGE-SPECIFIC PROOF LAYOUT + CONTROLS
+   Reading typography comes from .proof-info above.
+   ============================================================ */
+
+.clebsch-info .clebsch-question {
+    padding: 12px 14px;
+}
+
+.clebsch-info .clebsch-question mjx-container[display="true"] {
+    font-size: 1.02em;
+}
+
+.clebsch-info .proof-tabs {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.clebsch-remark-modes {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    margin: 9px 0 11px;
+}
+
+.clebsch-remark-mode {
+    min-height: 34px;
+    padding: 6px 8px;
+    border: 1px solid #d2d2d2;
+    border-radius: 5px;
+    background: #fff;
+    color: #555;
+    font-family: var(--content-font);
+    font-size: var(--p2-type-sm);
+    line-height: var(--p2-line-compact);
+    cursor: pointer;
+}
+
+.clebsch-remark-mode:hover {
+    background: #fafafa;
+}
+
+.clebsch-remark-mode.active {
+    border-color: #FFAB00;
+    box-shadow: inset 0 -2px 0 #FFAB00;
+    color: #222;
+}
+
+.geometry-group.remark-27,
+.geometry-group.remark-extra {
+    color: #777;
+}
+
+/* Page 2 control sizes are scoped by the class added in buildView(). */
+.clebsch-geometry-controls .geometry-group {
+    font-size: var(--p2-type-xs);
+}
+
+.clebsch-geometry-controls .geometry-control {
+    margin: 9px 0;
+    font-size: var(--p2-type-sm);
+}
+
+.clebsch-geometry-controls .clebsch-schlafli-selector {
+    margin: 7px auto 10px;
+}
+
+.clebsch-geometry-controls .clebsch-line-angle-header,
+.clebsch-geometry-controls .clebsch-line-angle-row,
+.clebsch-geometry-controls .clebsch-line-play,
+.clebsch-geometry-controls .clebsch-subbutton {
+    font-size: var(--p2-type-xs);
+}
+
+@media (max-height: 820px) and (max-width: 1600px) {
+    .clebsch-info .proof-tabs {
+        margin-top: 9px;
+        margin-bottom: 8px;
+    }
+}
+
+
+/* Page 2 contextual controls use the native hidden attribute. */
+#geometry-controls [hidden],
+.clebsch-subbutton[hidden] {
+    display: none !important;
+}
+
+
+/* ============================================================
+   CLEBSCH — PROOF PANEL CONTROLS
+   ============================================================ */
+
+.right-panel.clebsch-proof-mode {
+    position: relative;
+}
+
+.clebsch-proof-panel-toggle {
+    display: block;
+    position: absolute;
+    top: 10px;
+    left: 7px;
+    z-index: 70;
+}
+
+.right-panel.clebsch-proof-mode:not(.clebsch-proof-collapsed) {
+    padding-top: 48px;
+}
+
+.right-panel.clebsch-proof-collapsed {
+    overflow: hidden;
+    padding: 0;
+}
+
+.right-panel.clebsch-proof-collapsed .clebsch-info {
+    display: none;
+}
+
+.right-panel.clebsch-proof-collapsed #info-panel {
+    width: 42px;
+    height: 100%;
+}
+
+/* Keep the Page 2 answer column compact without horizontal equation scrolling. */
+.clebsch-info .proof-answer {
+    min-width: 0;
+}
+
+.clebsch-info .proof-answer .MathJax,
+.clebsch-info .proof-answer mjx-container {
+    max-width: 100%;
+}
+
+
+/* ============================================================
+   CLEBSCH — TARGET PROJECTION CARD
+   ============================================================ */
+
+.clebsch-target-card {
+    position: absolute;
+    right: 18px;
+    bottom: 18px;
+    z-index: 45;
+    width: clamp(230px, 24vw, 310px);
+    height: clamp(250px, 32vh, 330px);
+    overflow: hidden;
+    border: 1px solid #d1d1d1;
+    border-radius: 4px;
+    background: #fff;
+    box-shadow:
+        0 2px 8px rgba(0, 0, 0, 0.16),
+        0 0 0 1px rgba(0, 0, 0, 0.02);
+}
+
+.clebsch-target-card[hidden] {
+    display: none !important;
+}
+
+.clebsch-target-card-header {
+    position: relative;
+    z-index: 4;
+    display: flex;
+    min-height: 72px;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 8px 9px 7px 11px;
+    border-bottom: 1px solid #e0e0e0;
+    background: rgba(255, 255, 255, 0.96);
+    cursor: grab;
+    touch-action: none;
+    user-select: none;
+}
+
+body.clebsch-dragging-target-card
+    .clebsch-target-card-header {
+    cursor: grabbing;
+}
+
+.clebsch-target-card-title {
+    color: #2a2a2a;
+    font-size: var(--p2-type-lg);
+    font-weight: 600;
+    line-height: 1.1;
+}
+
+.clebsch-target-card-copy {
+    min-width: 0;
+}
+
+.clebsch-target-card-subtitle {
+    margin-top: 4px;
+    color: #777;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: var(--p2-type-xs);
+    line-height: var(--p2-line-compact);
+}
+
+.clebsch-target-card-meaning {
+    margin-top: 6px;
+    color: #333;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: var(--p2-type-sm);
+    font-style: italic;
+    line-height: var(--p2-line-compact);
+    white-space: nowrap;
+}
+
+
+
+/* Reversible complex-contact experiment (real target remains unchanged). */
+.clebsch-complex-toggle {
+    flex: 0 0 24px;
+    width: 24px; height: 24px; padding: 0;
+    border: 1px solid #d0d4d8; border-radius: 6px;
+    background: #fff; color: #596b80;
+    font: 17px Georgia, "Times New Roman", serif;
+    cursor: pointer;
+}
+.clebsch-complex-toggle:hover,
+.clebsch-complex-toggle[aria-pressed="true"] {
+    background: #edf2f7;
+}
+.clebsch-complex-contact-card {
+    position: absolute;
+    right: calc(18px + clamp(230px,24vw,310px) + 9px);
+    bottom: 18px; z-index: 46;
+    width: 160px; box-sizing: border-box; padding: 7px;
+    border: 1px solid #d4d8dc; border-radius: 5px;
+    background: rgba(255,255,255,0.98);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.14);
+    font-family: Arial, Helvetica, sans-serif;
+}
+.clebsch-complex-contact-card[hidden],
+.clebsch-complex-toggle[hidden] { display: none !important; }
+.clebsch-complex-header {
+    display: flex; align-items: center; justify-content: space-between;
+    color: #4c5360; font-size: 11px; font-weight: 600;
+}
+.clebsch-complex-header button {
+    border: 0; background: transparent; color: inherit;
+    font-size: 17px; cursor: pointer;
+}
+.clebsch-complex-svg {
+    display: block; width: 144px; height: 113px; margin: 2px auto;
+}
+.clebsch-complex-svg text {
+    fill: #66717c; font: 9px Arial, Helvetica, sans-serif;
+}
+.clebsch-complex-axis { stroke: #a8b0b8; stroke-width: 1; }
+.clebsch-complex-dot {
+    fill: #FFAB00; stroke: #a16600; stroke-width: 1.2;
+}
+.clebsch-complex-roots {
+    text-align: center; color: #333;
+    font: 12px Georgia, "Times New Roman", serif;
+}
+.clebsch-complex-footnote {
+    margin-top: 4px; text-align: center; color: #6c747b;
+    font-size: 9px; line-height: 1.35;
+}
+body.dark-mode .clebsch-complex-contact-card {
+    background: rgba(29,33,37,0.98); border-color: #454a4f;
+}
+body.dark-mode .clebsch-complex-toggle {
+    background: #23272b; border-color: #4b5055; color: #cfdbe6;
+}
+body.dark-mode .clebsch-complex-header,
+body.dark-mode .clebsch-complex-roots { color: #e0e2e5; }
+body.dark-mode .clebsch-complex-footnote { color: #aeb7c0; }
+@media (max-width: 860px) {
+    .clebsch-complex-contact-card {
+        right: 18px;
+        bottom: calc(18px + clamp(250px,32vh,330px) + 8px);
+    }
+}
+
+
+/* Opt-in upstairs diagram inside the existing reversible ℂ card. */
+.clebsch-complex-header > button#clebsch-complex-sheets-toggle {
+    margin-left:auto;
+    margin-right:6px;
+    border:1px solid #d3d8de;
+    border-radius:4px;
+    padding:2px 5px;
+    font-size:10px;
+    line-height:1.4;
+}
+.clebsch-complex-show-sheets {
+    width:min(346px,calc(100vw - 36px));
+}
+.clebsch-complex-sheets-view[hidden],
+.clebsch-complex-svg[hidden] { display:none !important; }
+
+.clebsch-complex-sheets-legend {
+    display:flex;
+    justify-content:center;
+    gap:16px;
+    padding-top:5px;
+    font:11px Georgia,"Times New Roman",serif;
+}
+.clebsch-complex-sheets-second { color:#A944A7; }
+.clebsch-complex-sheets-svg {
+    display:block;
+    width:100%;
+    height:auto;
+    max-height:248px;
+}
+.clebsch-complex-sheets-note {
+    margin:0 4px 4px;
+    font:10px/1.45 Arial,Helvetica,sans-serif;
+    color:#66717c;
+    text-align:center;
+}
+body.dark-mode .clebsch-complex-sheets-note { color:#aeb7c0; }
+body.dark-mode .clebsch-complex-header > button#clebsch-complex-sheets-toggle {
+    border-color:#59616a;
+}
+
+.clebsch-target-calculator {
+    position: absolute;
+    top: 72px;
+    right: 0;
+    bottom: 0;
+    left: 0;
+}
+
+/* ============================================================
+   DARK MODE
+   ============================================================ */
+
+.site-heading {
+    position: relative;
+    padding-right: 34px;
+}
+
+.theme-toggle {
+    position: absolute;
+    top: -1px;
+    right: 0;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: 1px solid #d2d2d2;
+    border-radius: 6px;
+    background: #fff;
+    color: #555;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 15px;
+    line-height: 26px;
+    text-align: center;
+    cursor: pointer;
+}
+
+.theme-toggle:hover {
+    background: #f2f2f2;
+}
+
+body.dark-mode {
+    color: #e7e7e7;
+    background: #151719;
+    color-scheme: dark;
+}
+
+body.dark-mode .left-panel {
+    border-right-color: #3b3e42;
+    background: #1c1f22;
+}
+
+body.dark-mode .site-title,
+body.dark-mode .surface-button,
+body.dark-mode .geometry-control,
+body.dark-mode .warmup-slider-name,
+body.dark-mode .clebsch-line-angle-header {
+    color: #e7e7e7;
+}
+
+body.dark-mode .eyebrow,
+body.dark-mode .nav-heading,
+body.dark-mode .surface-type,
+body.dark-mode .geometry-group,
+body.dark-mode .warmup-note {
+    color: #a9adb2;
+}
+
+body.dark-mode .surface-button:hover {
+    background: #292d31;
+}
+
+body.dark-mode .surface-button.active {
+    background: #32363a;
+}
+
+body.dark-mode .workspace-scroll,
+body.dark-mode .visual-stage,
+body.dark-mode .right-panel {
+    background: #16191c;
+}
+
+body.dark-mode .right-panel {
+    border-left-color: #3b3e42;
+}
+
+body.dark-mode #info-panel,
+body.dark-mode .clebsch-info,
+body.dark-mode .warmup-info {
+    color: #e7e7e7;
+}
+
+body.dark-mode .theorem,
+body.dark-mode .clebsch-question {
+    border-left-color: #666c72;
+    background: #22262a;
+}
+
+body.dark-mode .proof-tab,
+body.dark-mode .complete-picture-button,
+body.dark-mode .clebsch-remark-mode,
+body.dark-mode .clebsch-subbutton,
+body.dark-mode .clebsch-line-play,
+body.dark-mode .warmup-reset-button,
+body.dark-mode .complete-controls-toggle,
+body.dark-mode .theme-toggle {
+    border-color: #4b5055;
+    background: #23272b;
+    color: #dfe3e6;
+}
+
+body.dark-mode .proof-tab:hover,
+body.dark-mode .complete-picture-button:hover,
+body.dark-mode .clebsch-remark-mode:hover,
+body.dark-mode .clebsch-subbutton:hover:not(:disabled),
+body.dark-mode .theme-toggle:hover {
+    background: #2d3237;
+}
+
+body.dark-mode .proof-note {
+    border-top-color: #3c4146;
+    color: #bcc1c5;
+}
+
+body.dark-mode .clebsch-schlafli-core {
+    border-color: rgba(255, 255, 255, 0.13);
+    background: rgba(31, 34, 37, 0.95);
+}
+
+body.dark-mode .clebsch-schlafli-family-button {
+    border: 0;
+    background: transparent;
+    color: var(--family-color);
+}
+
+body.dark-mode .clebsch-schlafli-family-heart-shape {
+    fill: rgba(242, 244, 246, 0.96);
+    stroke: rgba(242, 244, 246, 0.98);
+}
+
+body.dark-mode .clebsch-schlafli-family-button.active {
+    background: transparent;
+    color: #fff;
+}
+
+body.dark-mode .clebsch-schlafli-family-button.active
+    .clebsch-schlafli-family-heart-shape {
+    fill: var(--family-color);
+    stroke: rgba(255, 255, 255, 0.98);
+}
+
+body.dark-mode .clebsch-schlafli-index {
+    border-color: rgba(255, 255, 255, 0.36);
+    background: rgba(36, 39, 42, 0.92);
+    color: #e2e2e2;
+}
+
+body.dark-mode .clebsch-target-card {
+    border-color: #454a4f;
+    background: #1d2125;
+    box-shadow:
+        0 2px 8px rgba(0, 0, 0, 0.30),
+        0 0 0 1px rgba(255, 255, 255, 0.03);
+}
+
+body.dark-mode .clebsch-target-card-header {
+    border-bottom-color: #454a4f;
+    background: rgba(29, 33, 37, 0.97);
+}
+
+body.dark-mode .clebsch-target-card-title {
+    color: #ededed;
+}
+
+body.dark-mode .clebsch-target-card-subtitle {
+    color: #aeb3b8;
+}
+
+body.dark-mode .proof-panel-toggle {
+    background: rgba(28, 31, 34, 0.94);
+    color: #d5d9dd;
+}
+
+body.dark-mode .proof-panel-toggle:hover {
+    background: #292d31;
+    color: #fff;
+}
+
+body.dark-mode {
+    scrollbar-color: #555b61 #1b1e21;
+}
+
+@media (max-height: 820px) and (max-width: 1600px) {
+    .clebsch-target-card {
+        width: 248px;
+        height: 270px;
+        right: 12px;
+        bottom: 12px;
+    }
+}
+
+
+/* ============================================================
+   PAGE 2 — ROBUST RANGE DRAG
+   ============================================================ */
+
+.clebsch-line-controls {
+    position: relative;
+    z-index: 4;
+}
+
+.clebsch-line-angle-row {
+    position: relative;
+    z-index: 5;
+}
+
+.clebsch-line-angle-row input[type="range"]::-webkit-slider-thumb {
+    cursor: ew-resize;
+}
+
+.clebsch-line-angle-row input[type="range"]::-moz-range-thumb {
+    cursor: ew-resize;
+}
+
+
+/* ============================================================
+   PAGE 2 — STABLE DESMOS DRAWER TOGGLE
+   ============================================================ */
+
+.clebsch-equations-toggle {
+    position: absolute;
+    top: 12px;
+    left: 14px;
+    z-index: 60;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: #666;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 28px;
+    line-height: 32px;
+    text-align: center;
+    cursor: pointer;
+    opacity: 0.92;
+}
+
+.clebsch-equations-toggle:hover {
+    color: #222;
+    opacity: 1;
+}
+
+body.dark-mode .clebsch-equations-toggle {
+    color: #b8bdc2;
+}
+
+body.dark-mode .clebsch-equations-toggle:hover {
+    color: #fff;
+}
+
+body.dark-mode .clebsch-target-card-meaning {
+    color: #e2e4e6;
+}
+
+
+
+/* ============================================================
+   PAGE 2 — SINGLE DESMOS DRAWER CONTROL
+   The custom »/« button is the only expression-drawer control.
+   ============================================================ */
+
+#calculator .dcg-in-api-action-opendrawer,
+#calculator .dcg-action-opendrawer {
+    display: none !important;
+}
+
+.clebsch-equations-toggle[hidden] {
+    display: none !important;
+}
+
+.clebsch-ramification-example {
+    display: block;
+    width: 100%;
+    margin-top: 10px;
+    padding: 6px 8px;
+    border: 1px solid rgba(169, 68, 167, 0.55);
+    border-radius: 5px;
+    background: #fff;
+    color: #A944A7;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: var(--p2-type-xs);
+    line-height: var(--p2-line-compact);
+    cursor: pointer;
+}
+
+.clebsch-ramification-example:hover:not(:disabled) {
+    border-color: #A944A7;
+    background: rgba(169, 68, 167, 0.06);
+}
+
+.clebsch-ramification-example:disabled {
+    opacity: 0.45;
+    cursor: default;
+}
+
+body.dark-mode .clebsch-ramification-example {
+    border-color: rgba(213, 102, 210, 0.65);
+    background: #23272b;
+    color: #e07ddd;
+}
+
+body.dark-mode .clebsch-ramification-example:hover:not(:disabled) {
+    background: #2d3237;
+}
+
+
+/* ============================================================
+   PAGE 2 — GEOMETRIC PLANE SLICE
+   ============================================================ */
+
+.clebsch-slice-angle-row {
+    position: relative;
+    z-index: 5;
+    display: grid;
+    grid-template-columns: auto minmax(80px, 1fr) auto;
+    gap: 6px;
+    align-items: center;
+    color: #888;
+    font-size: var(--p2-type-xs);
+}
+
+.clebsch-slice-angle-row input[type="range"] {
+    position: relative;
+    z-index: 3;
+    width: 100%;
+    min-width: 0;
+    height: 22px;
+    margin: 0;
+    padding: 0;
+    accent-color: #A944A7;
+    cursor: ew-resize;
+    pointer-events: auto !important;
+    touch-action: none;
+    user-select: none;
+}
+
+.clebsch-slice-angle-row input[type="range"]::-webkit-slider-thumb,
+.clebsch-slice-angle-row input[type="range"]::-moz-range-thumb {
+    cursor: ew-resize;
+}
+
+.clebsch-slice-card {
+    position: absolute;
+    right: 18px;
+    bottom: 18px;
+    z-index: 45;
+    width: clamp(260px, 28vw, 360px);
+    height: clamp(270px, 35vh, 365px);
+    overflow: hidden;
+    border: 1px solid #d1d1d1;
+    border-radius: 4px;
+    background: #fff;
+    box-shadow:
+        0 2px 8px rgba(0, 0, 0, 0.16),
+        0 0 0 1px rgba(0, 0, 0, 0.02);
+}
+
+.clebsch-slice-card[hidden] {
+    display: none !important;
+}
+
+.clebsch-slice-card-header {
+    position: relative;
+    z-index: 4;
+    display: flex;
+    min-height: 56px;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 10px 7px 11px;
+    border-bottom: 1px solid #e0e0e0;
+    background: rgba(255, 255, 255, 0.96);
+}
+
+.clebsch-slice-card-title {
+    color: #2a2a2a;
+    font-size: var(--p2-type-md);
+    font-weight: 600;
+    line-height: 1.1;
+}
+
+.clebsch-slice-card-subtitle {
+    margin-top: 3px;
+    color: #777;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: var(--p2-type-xs);
+    font-style: italic;
+    line-height: var(--p2-line-compact);
+}
+
+.clebsch-slice-card-meaning {
+    color: #555;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: var(--p2-type-xs);
+    font-style: italic;
+    line-height: var(--p2-line-compact);
+    white-space: nowrap;
+}
+
+.clebsch-slice-calculator {
+    position: absolute;
+    top: 56px;
+    right: 0;
+    bottom: 0;
+    left: 0;
+}
+
+body.dark-mode .clebsch-slice-card {
+    border-color: #454a4f;
+    background: #1d2125;
+    box-shadow:
+        0 2px 8px rgba(0, 0, 0, 0.30),
+        0 0 0 1px rgba(255, 255, 255, 0.03);
+}
+
+body.dark-mode .clebsch-slice-card-header {
+    border-bottom-color: #454a4f;
+    background: rgba(29, 33, 37, 0.97);
+}
+
+body.dark-mode .clebsch-slice-card-title {
+    color: #ededed;
+}
+
+body.dark-mode .clebsch-slice-card-subtitle,
+body.dark-mode .clebsch-slice-card-meaning {
+    color: #b8bdc2;
+}
+
+@media (max-height: 820px) and (max-width: 1600px) {
+    .clebsch-slice-card {
+        width: 270px;
+        height: 278px;
+        right: 12px;
+        bottom: 12px;
+    }
+}
+
+
+/* ============================================================
+   PAGE 2 — ANSWER 2 STEPPER
+   ============================================================ */
+
+.clebsch-equation-stepper {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 4px;
+    margin: 9px 0 7px;
+}
+
+.clebsch-equation-step {
+    min-width: 0;
+    padding: 6px 5px;
+    border: 1px solid #d2d2d2;
+    border-radius: 5px;
+    background: #fff;
+    color: #666;
+    font-family: var(--content-font);
+    font-size: var(--p2-type-sm);
+    line-height: var(--p2-line-compact);
+    cursor: pointer;
+}
+
+.clebsch-equation-step:hover {
+    background: #fafafa;
+}
+
+.clebsch-equation-step.active {
+    border-color: #A944A7;
+    box-shadow: inset 0 -2px 0 #A944A7;
+    color: #222;
+}
+
+.clebsch-equation-step-nav {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 8px;
+    align-items: center;
+    margin: 1px 0 11px;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: var(--p2-type-xs);
+}
+
+.clebsch-equation-step-nav span {
+    color: #777;
+    text-align: center;
+}
+
+.clebsch-equation-step-nav button {
+    padding: 4px 8px;
+    border: 1px solid #d7d7d7;
+    border-radius: 5px;
+    background: #fff;
+    color: #555;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: var(--p2-type-xs);
+    cursor: pointer;
+}
+
+.clebsch-equation-step-nav button:hover:not(:disabled) {
+    border-color: #A944A7;
+    color: #A944A7;
+}
+
+.clebsch-equation-step-nav button:disabled {
+    opacity: 0.35;
+    cursor: default;
+}
+
+.clebsch-equation-step-panel {
+    display: none;
+}
+
+.clebsch-equation-step-panel.active {
+    display: block;
+}
+
+body.dark-mode .clebsch-equation-step,
+body.dark-mode .clebsch-equation-step-nav button {
+    border-color: #4b5055;
+    background: #23272b;
+    color: #dfe3e6;
+}
+
+body.dark-mode .clebsch-equation-step:hover,
+body.dark-mode .clebsch-equation-step-nav button:hover:not(:disabled) {
+    background: #2d3237;
+}
+
+body.dark-mode .clebsch-equation-step.active {
+    border-color: #d566d2;
+    box-shadow: inset 0 -2px 0 #d566d2;
+    color: #fff;
+}
+
+body.dark-mode .clebsch-equation-step-nav span {
+    color: #aeb3b8;
+}
+
+
+body.dark-mode .clebsch-line-angle-value {
+    color: #e16964;
+}
+
+body.dark-mode .clebsch-line-angle-input {
+    border-color: #4b5055;
+    background: #23272b;
+    color: #e16964;
+}
+
+body.dark-mode .clebsch-line-play {
+    border-color: rgba(225, 105, 100, 0.56);
+    background: #23272b;
+    color: #e16964;
+}
+
+body.dark-mode .clebsch-line-play.playing {
+    border-color: #e16964;
+    background: #a71912;
+    color: #fff;
+}
+
+/* ============================================================
+   PAGE 2 — NONSTOP RAMIFICATION MODE
+   ============================================================ */
+
+.clebsch-nonstop-button {
+    width: 24px;
+    height: 22px;
+    margin: 0;
+    padding: 1px;
+    border: 1px solid #cdcdcd;
+    border-radius: 5px;
+    background: #fff;
+    color: #5f5f5f;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.clebsch-nonstop-button:hover {
+    border-color: #aaa;
+    color: #222;
+    background: #fafafa;
+}
+
+.clebsch-nonstop-button.active {
+    border-color: #A944A7;
+    background: rgba(169, 68, 167, 0.10);
+    color: #A944A7;
+}
+
+.clebsch-nonstop-icon {
+    width: 18px;
+    height: 18px;
+    overflow: visible;
+}
+
+.clebsch-nonstop-icon .nonstop-icon-stop {
+    fill: currentColor;
+}
+
+.clebsch-nonstop-icon .nonstop-icon-slash {
+    stroke: currentColor;
+    stroke-width: 2.6;
+    stroke-linecap: round;
+}
+
+body.dark-mode .clebsch-nonstop-button {
+    border-color: #4b5055;
+    background: #23272b;
+    color: #dfe3e6;
+}
+
+body.dark-mode .clebsch-nonstop-button:hover {
+    background: #2d3237;
+    color: #fff;
+}
+
+body.dark-mode .clebsch-nonstop-button.active {
+    border-color: #d566d2;
+    background: rgba(213, 102, 210, 0.13);
+    color: #d566d2;
+}
+
+/* ============================================================
+   PAGE 2 — LOCAL BLOW-UP PRESENTATION
+   ============================================================ */
+
+.clebsch-blowup-prompt {
+    position: absolute;
+    left: 50%;
+    bottom: 28px;
+    z-index: 52;
+    width: auto;
+    height: 32px;
+    margin: 0;
+    padding: 0 13px;
+    transform: translateX(-50%);
+    border: 1px solid rgba(169, 68, 167, 0.55);
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.96);
+    color: #7d347c;
+    font-family: var(--content-font);
+    font-size: var(--p2-type-sm);
+    line-height: 30px;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.10);
+    cursor: pointer;
+}
+
+.clebsch-blowup-prompt:hover {
+    border-color: #A944A7;
+    background: #fff;
+    color: #A944A7;
+}
+
+.clebsch-blowup-prompt[hidden],
+.clebsch-blowup-view[hidden] {
+    display: none !important;
+}
+
+.clebsch-blowup-view {
+    position: absolute;
+    inset: 42px 34px 42px;
+    z-index: 50;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border: 1px solid #d2d2d2;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.975);
+    box-shadow: 0 8px 26px rgba(0, 0, 0, 0.12);
+}
+
+.clebsch-blowup-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 18px;
+    padding: 13px 15px 10px;
+    border-bottom: 1px solid #e1e1e1;
+}
+
+.clebsch-blowup-title {
+    color: #222;
+    font-family: var(--content-font);
+    font-size: var(--p2-type-lg);
+    font-weight: 600;
+}
+
+.clebsch-blowup-subtitle {
+    margin-top: 4px;
+    color: #777;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: var(--p2-type-sm);
+    font-style: italic;
+}
+
+.clebsch-blowup-header-math {
+    white-space: nowrap;
+}
+
+.clebsch-blowup-header-math sub {
+    font-size: 0.88em;
+    line-height: 0;
+}
+
+.clebsch-blowup-back {
+    width: auto;
+    height: 28px;
+    margin: 0;
+    padding: 0 9px;
+    border: 1px solid #d0d0d0;
+    border-radius: 5px;
+    background: #fff;
+    color: #555;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: var(--p2-type-xs);
+    cursor: pointer;
+}
+
+.clebsch-blowup-diagram {
+    position: relative;
+    display: flex;
+    flex: 1;
+    min-height: 0;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 16px 14px;
+}
+
+.clebsch-blowup-svg {
+    width: min(92%, 720px);
+    max-height: calc(100% - 76px);
+    overflow: visible;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: var(--p2-type-sm);
+}
+
+.clebsch-blowup-svg-full {
+    width: min(98%, 1120px);
+    max-height: calc(100% - 58px);
+}
+
+.clebsch-blowup-full-curve,
+.clebsch-blowup-strict-transform-full {
+    fill: none;
+    stroke: #A944A7;
+    stroke-width: 3;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.clebsch-blowup-curve-label {
+    fill: #A944A7;
+    font-size: var(--p2-type-sm);
+    font-style: italic;
+}
+
+.clebsch-blowup-complement-frame {
+    fill: rgba(255, 255, 255, 0.52);
+    stroke: rgba(120, 120, 120, 0.28);
+    stroke-width: 1;
+}
+
+.clebsch-blowup-complement-title,
+.clebsch-blowup-complement-subtitle,
+.clebsch-blowup-complement-note {
+    fill: #777;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: var(--p2-type-xs);
+}
+
+.clebsch-blowup-complement-title {
+    font-weight: 600;
+}
+
+.clebsch-blowup-complementary-toggle {
+    fill: #666;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: var(--p2-type-sm);
+    font-style: italic;
+    cursor: pointer;
+    user-select: none;
+}
+
+.clebsch-blowup-complementary-toggle:hover,
+.clebsch-blowup-complementary-toggle:focus {
+    fill: #A944A7;
+    text-decoration: underline;
+    outline: none;
+}
+
+#clebsch-blowup-actual-strict-transform {
+    cursor: pointer;
+}
+
+.clebsch-blowup-complement-subtitle {
+    font-style: italic;
+}
+
+.clebsch-blowup-static-correspondence {
+    fill: none;
+    stroke: #aaa;
+    stroke-width: 0.9;
+    stroke-dasharray: 3 3;
+    opacity: 0.72;
+}
+
+.clebsch-blowup-static-correspondence-point {
+    fill: #fff;
+    stroke: #929292;
+    stroke-width: 1;
+}
+
+.clebsch-blowup-moving-correspondence {
+    fill: none;
+    stroke: #A944A7;
+    stroke-width: 1.2;
+    stroke-dasharray: 5 4;
+    opacity: 0.72;
+}
+
+.clebsch-blowup-moving-correspondence-point {
+    fill: #fff;
+    stroke: #A944A7;
+    stroke-width: 2.1;
+}
+
+.clebsch-blowup-moving-source-line {
+    stroke: #A944A7;
+    stroke-width: 1.6;
+    stroke-linecap: round;
+    opacity: 0.9;
+}
+
+.clebsch-blowup-moving-source-line-label,
+.clebsch-blowup-moving-source-point-label {
+    fill: #A944A7;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: var(--p2-type-xs);
+    font-style: italic;
+}
+
+.clebsch-blowup-moving-exceptional-point {
+    fill: #FFAB00;
+    stroke: #A944A7;
+    stroke-width: 1.8;
+}
+
+.clebsch-blowup-coordinate-axis {
+    fill: none;
+    stroke: #9a9a9a;
+    stroke-width: 1;
+    opacity: 0.78;
+}
+
+.clebsch-blowup-axis-arrowhead-fill {
+    fill: #9a9a9a;
+}
+
+.clebsch-blowup-exceptional-line {
+    fill: none;
+    stroke: #FFAB00;
+    stroke-width: 2.2;
+}
+
+.clebsch-blowup-coordinate-label {
+    fill: #666;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: var(--p2-type-xs);
+    font-style: italic;
+}
+
+.clebsch-blowup-exceptional-axis-label {
+    fill: #A16600;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: var(--p2-type-xs);
+    font-style: italic;
+}
+
+.clebsch-blowup-complement-note {
+    fill: #777;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: var(--p2-type-xs);
+    font-style: italic;
+}
+
+.clebsch-blowup-strict-transform-complement {
+    fill: none;
+    stroke: #A944A7;
+    stroke-width: 2.4;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.clebsch-blowup-target-frame {
+    fill: rgba(255, 255, 255, 0.56);
+    stroke: rgba(120, 120, 120, 0.28);
+    stroke-width: 1;
+}
+
+.clebsch-blowup-target-branch {
+    fill: none;
+    stroke: #527A50;
+    stroke-width: 2.1;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.clebsch-blowup-target-bitangent {
+    fill: none;
+    stroke: #A944A7;
+    stroke-width: 2.2;
+    stroke-linecap: round;
+}
+
+.clebsch-blowup-target-point {
+    fill: #FFAB00;
+    stroke: #A16600;
+    stroke-width: 1;
+}
+
+.clebsch-blowup-target-point-label,
+.clebsch-blowup-target-line-label,
+.clebsch-blowup-target-branch-label {
+    font-family: Georgia, "Times New Roman", serif;
+    font-style: italic;
+}
+
+.clebsch-blowup-target-moving {
+    fill: #A944A7;
+    stroke: #7d347c;
+    stroke-width: 1.2;
+}
+
+.clebsch-blowup-target-moving-label {
+    fill: #A944A7;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: var(--p2-type-sm);
+    font-style: italic;
+}
+
+.clebsch-blowup-target-point-label {
+    fill: #9a6400;
+    font-size: var(--p2-type-sm);
+}
+
+.clebsch-blowup-target-line-label {
+    fill: #A944A7;
+    font-size: var(--p2-type-sm);
+}
+
+.clebsch-blowup-target-branch-label {
+    fill: #527A50;
+    font-size: var(--p2-type-sm);
+}
+
+.clebsch-blowup-branch {
+    fill: none;
+    stroke: #A944A7;
+    stroke-width: 3;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.clebsch-blowup-strict-transform {
+    fill: none;
+    stroke: #A944A7;
+    stroke-width: 2.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.clebsch-blowup-exceptional-point {
+    fill: #FFAB00;
+    stroke: #A16600;
+    stroke-width: 1.2;
+}
+
+.clebsch-blowup-exceptional-label {
+    fill: #A16600;
+    font-size: var(--p2-type-sm);
+    font-style: italic;
+}
+
+.clebsch-blowup-tangent-guide {
+    stroke: #FFAB00;
+    stroke-width: 1.5;
+    stroke-dasharray: 5 5;
+    opacity: 0.9;
+}
+
+.clebsch-blowup-tangent-label {
+    fill: #9a6400;
+    font-size: var(--p2-type-sm);
+    font-style: italic;
+}
+
+.clebsch-blowup-node {
+    fill: #6f6f6f;
+}
+
+.clebsch-blowup-stage-title {
+    fill: #333;
+    font-size: var(--p2-type-md);
+    font-weight: 600;
+}
+
+.clebsch-svg-sub,
+.clebsch-svg-sup {
+    font-size: 0.88em;
+    font-style: inherit;
+    font-weight: inherit;
+}
+
+.clebsch-svg-sub {
+    baseline-shift: sub;
+}
+
+.clebsch-svg-sup {
+    baseline-shift: super;
+}
+
+.clebsch-svg-sub-inner {
+    font-size: 0.86em;
+    baseline-shift: sub;
+}
+
+.clebsch-blowup-stage-subtitle {
+    fill: #777;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: var(--p2-type-xs);
+}
+
+.clebsch-blowup-point-label,
+.clebsch-blowup-special-label,
+.clebsch-blowup-selected-label,
+.clebsch-blowup-quotient-label {
+    fill: #555;
+}
+
+.clebsch-blowup-special-label {
+    fill: #9a6400;
+    font-size: var(--p2-type-sm);
+    font-style: italic;
+}
+
+.clebsch-blowup-selected-label {
+    fill: #A944A7;
+    font-size: var(--p2-type-sm);
+    font-style: italic;
+}
+
+.clebsch-blowup-quotient-label {
+    fill: #777;
+    font-size: var(--p2-type-xs);
+    font-style: italic;
+}
+
+.clebsch-blowup-exceptional {
+    fill: none;
+    stroke: #777;
+    stroke-width: 2.2;
+}
+
+.clebsch-blowup-arrow {
+    fill: none;
+    stroke: #888;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+}
+
+.clebsch-blowup-arrowhead-fill {
+    fill: #888;
+}
+
+.clebsch-blowup-rational-arrow {
+    stroke-dasharray: 8 7;
+}
+
+.clebsch-blowup-rational-label {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: var(--p2-type-xs);
+}
+
+.clebsch-blowup-ray {
+    stroke: rgba(169, 68, 167, 0.55);
+    stroke-width: 2;
+}
+
+.clebsch-blowup-selected {
+    fill: #A944A7;
+    stroke: #fff;
+    stroke-width: 1.5;
+}
+
+.clebsch-blowup-special-point {
+    fill: #FFAB00;
+    stroke: #A16600;
+    stroke-width: 1;
+}
+
+.clebsch-blowup-arrow-label {
+    fill: #666;
+    font-style: italic;
+}
+
+
+.clebsch-blowup-inline-sync {
+    position: absolute;
+    left: 50%;
+    top: 56%;
+    z-index: 4;
+    display: grid;
+    width: 240px;
+    transform: translate(-50%, -50%);
+    justify-items: center;
+    gap: 10px;
+    pointer-events: auto;
+}
+
+.clebsch-blowup-inline-direction-card,
+.clebsch-blowup-inline-projection-strip,
+.clebsch-blowup-inline-slider-card {
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+}
+
+.clebsch-blowup-inline-direction-card {
+    width: 124px;
+    height: 108px;
+    overflow: visible;
+}
+
+.clebsch-blowup-inline-exceptional-svg {
+    display: block;
+    width: 124px;
+    height: 118px;
+    margin-top: -5px;
+    overflow: visible;
+    font-family: Georgia, "Times New Roman", serif;
+}
+
+.clebsch-blowup-inline-projection-strip {
+    display: grid;
+    width: 230px;
+    min-height: 42px;
+    align-content: center;
+    justify-items: center;
+    padding: 3px 6px 5px;
+    box-sizing: border-box;
+    color: #666;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: var(--p2-type-sm);
+    font-style: italic;
+}
+
+.clebsch-blowup-inline-projection-line {
+    position: relative;
+    display: block;
+    width: 100%;
+    height: 0;
+    margin-top: 6px;
+    border-top: 1.8px dashed #666;
+}
+
+.clebsch-blowup-inline-projection-line::after {
+    position: absolute;
+    top: -5px;
+    right: -1px;
+    width: 0;
+    height: 0;
+    border-top: 4px solid transparent;
+    border-bottom: 4px solid transparent;
+    border-left: 7px solid #666;
+    content: "";
+}
+
+.clebsch-blowup-inline-slider-card {
+    width: 210px;
+    padding: 2px 4px 4px;
+    box-sizing: border-box;
+}
+
+.clebsch-blowup-inline-quotient {
+    color: #777;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: var(--p2-type-xs);
+    font-style: italic;
+    text-align: center;
+}
+
+.clebsch-blowup-inline-control {
+    display: grid;
+    grid-template-columns: 25px auto minmax(0, 1fr) 4.1em;
+    gap: 7px;
+    align-items: center;
+    margin-top: 7px;
+    color: #777;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: var(--p2-type-xs);
+    font-style: italic;
+}
+
+.clebsch-blowup-inline-play {
+    width: 25px;
+    height: 22px;
+    margin: 0;
+    padding: 0;
+    border: 1px solid rgba(169, 68, 167, 0.45);
+    border-radius: 4px;
+    background: #fff;
+    color: #A944A7;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 10px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.clebsch-blowup-inline-play:hover {
+    border-color: #A944A7;
+}
+
+.clebsch-blowup-inline-play.playing {
+    border-color: #A944A7;
+    background: #A944A7;
+    color: #fff;
+}
+
+.clebsch-blowup-inline-control-label {
+    white-space: nowrap;
+}
+
+.clebsch-blowup-inline-value {
+    min-width: 4.1em;
+    color: #A944A7;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: var(--p2-type-xs);
+    font-style: normal;
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+    white-space: nowrap;
+}
+
+.clebsch-blowup-ramification-cue {
+    min-height: 2.4em;
+    margin-top: 5px;
+    color: #7d347c;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: var(--p2-type-xs);
+    font-style: italic;
+    line-height: 1.2;
+    text-align: center;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.clebsch-blowup-ramification-cue sub {
+    font-size: 0.88em;
+    line-height: 0;
+}
+
+.clebsch-blowup-ramification-cue.active {
+    opacity: 1;
+}
+
+.clebsch-blowup-ramification-pulse {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: clebsch-blowup-ramification-pulse 1.05s ease-out;
+}
+
+@keyframes clebsch-blowup-ramification-pulse {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    35% {
+        transform: scale(1.75);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.clebsch-blowup-inline-control input[type="range"] {
+    width: 100%;
+    min-width: 0;
+    margin: 0;
+    accent-color: #A944A7;
+    cursor: ew-resize;
+}
+
+body.dark-mode .clebsch-blowup-inline-projection-strip,
+body.dark-mode .clebsch-blowup-inline-quotient,
+body.dark-mode .clebsch-blowup-inline-control {
+    color: #c3c7cb;
+}
+
+body.dark-mode .clebsch-blowup-inline-play {
+    border-color: rgba(224, 125, 221, 0.56);
+    background: #23272b;
+    color: #e07ddd;
+}
+
+body.dark-mode .clebsch-blowup-inline-play.playing {
+    border-color: #e07ddd;
+    background: #A944A7;
+    color: #fff;
+}
+
+body.dark-mode .clebsch-blowup-inline-value {
+    color: #e07ddd;
+}
+
+body.dark-mode .clebsch-blowup-ramification-cue {
+    color: #e07ddd;
+}
+
+body.dark-mode .clebsch-blowup-inline-projection-line {
+    border-top-color: #9aa0a6;
+}
+
+body.dark-mode .clebsch-blowup-inline-projection-line::after {
+    border-left-color: #9aa0a6;
+}
+
+.clebsch-blowup-note {
+    margin-top: 8px;
+    color: #888;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: var(--p2-type-xs);
+    text-align: center;
+}
+
+.clebsch-blowup-note sub,
+.clebsch-blowup-note sup {
+    font-size: 0.88em;
+    line-height: 0;
+}
+
+body.dark-mode .clebsch-blowup-prompt {
+    border-color: rgba(213, 102, 210, 0.62);
+    background: rgba(35, 39, 43, 0.97);
+    color: #e07ddd;
+}
+
+body.dark-mode .clebsch-blowup-view {
+    border-color: #454a4f;
+    background: rgba(29, 33, 37, 0.98);
+    box-shadow: 0 8px 26px rgba(0, 0, 0, 0.36);
+}
+
+body.dark-mode .clebsch-blowup-header {
+    border-bottom-color: #454a4f;
+}
+
+body.dark-mode .clebsch-blowup-title {
+    color: #ededed;
+}
+
+body.dark-mode .clebsch-blowup-subtitle,
+body.dark-mode .clebsch-blowup-note,
+body.dark-mode .clebsch-blowup-control,
+body.dark-mode .clebsch-blowup-svg {
+    color: #b8bdc2;
+}
+
+body.dark-mode .clebsch-blowup-stage-title {
+    fill: #ededed;
+}
+
+body.dark-mode .clebsch-blowup-stage-subtitle,
+body.dark-mode .clebsch-blowup-point-label,
+body.dark-mode .clebsch-blowup-quotient-label {
+    fill: #b8bdc2;
+}
+
+body.dark-mode .clebsch-blowup-tangent-guide {
+    stroke: #ffc35a;
+}
+
+body.dark-mode .clebsch-blowup-exceptional-point {
+    fill: #ffc35a;
+    stroke: #c98a16;
+}
+
+body.dark-mode .clebsch-blowup-exceptional-label {
+    fill: #ffc35a;
+}
+
+body.dark-mode .clebsch-blowup-curve-label {
+    fill: #e07ddd;
+}
+
+body.dark-mode .clebsch-blowup-complement-frame {
+    fill: rgba(29, 33, 37, 0.48);
+    stroke: rgba(255, 255, 255, 0.17);
+}
+
+body.dark-mode .clebsch-blowup-complement-title,
+body.dark-mode .clebsch-blowup-complement-subtitle,
+body.dark-mode .clebsch-blowup-complement-note {
+    fill: #b8bdc2;
+}
+
+body.dark-mode .clebsch-blowup-complementary-toggle {
+    fill: #b8bdc2;
+}
+
+body.dark-mode .clebsch-blowup-complementary-toggle:hover,
+body.dark-mode .clebsch-blowup-complementary-toggle:focus {
+    fill: #e07ddd;
+}
+
+body.dark-mode .clebsch-blowup-static-correspondence {
+    stroke: #737980;
+}
+
+body.dark-mode .clebsch-blowup-static-correspondence-point {
+    fill: #23272b;
+    stroke: #9aa0a6;
+}
+
+body.dark-mode .clebsch-blowup-moving-correspondence {
+    stroke: #e07ddd;
+}
+
+body.dark-mode .clebsch-blowup-moving-correspondence-point {
+    fill: #23272b;
+    stroke: #e07ddd;
+}
+
+body.dark-mode .clebsch-blowup-moving-source-line {
+    stroke: #e07ddd;
+}
+
+body.dark-mode .clebsch-blowup-moving-source-line-label,
+body.dark-mode .clebsch-blowup-moving-source-point-label {
+    fill: #e07ddd;
+}
+
+body.dark-mode .clebsch-blowup-moving-exceptional-point {
+    fill: #ffc35a;
+    stroke: #e07ddd;
+}
+
+body.dark-mode .clebsch-blowup-coordinate-axis {
+    stroke: #858b91;
+}
+
+body.dark-mode .clebsch-blowup-axis-arrowhead-fill {
+    fill: #858b91;
+}
+
+body.dark-mode .clebsch-blowup-exceptional-line {
+    stroke: #ffc35a;
+}
+
+body.dark-mode .clebsch-blowup-coordinate-label {
+    fill: #c0c4c8;
+}
+
+body.dark-mode .clebsch-blowup-exceptional-axis-label {
+    fill: #ffc35a;
+}
+
+body.dark-mode .clebsch-blowup-strict-transform-complement {
+    stroke: #e07ddd;
+}
+
+body.dark-mode .clebsch-blowup-target-frame {
+    fill: rgba(29, 33, 37, 0.52);
+    stroke: rgba(255, 255, 255, 0.16);
+}
+
+body.dark-mode .clebsch-blowup-target-branch,
+body.dark-mode .clebsch-blowup-target-branch-label {
+    stroke: #8fb58c;
+    fill: #8fb58c;
+}
+
+body.dark-mode .clebsch-blowup-target-bitangent,
+body.dark-mode .clebsch-blowup-target-line-label {
+    stroke: #e07ddd;
+    fill: #e07ddd;
+}
+
+body.dark-mode .clebsch-blowup-target-moving {
+    fill: #e07ddd;
+    stroke: #b255ae;
+}
+
+body.dark-mode .clebsch-blowup-target-moving-label {
+    fill: #e07ddd;
+}
+
+body.dark-mode .clebsch-blowup-target-point-label {
+    fill: #ffc35a;
+}
+
+body.dark-mode .clebsch-blowup-tangent-label {
+    fill: #ffc35a;
+}
+
+body.dark-mode .clebsch-blowup-special-label {
+    fill: #ffc35a;
+}
+
+body.dark-mode .clebsch-blowup-selected-label {
+    fill: #e07ddd;
+}
+
+body.dark-mode .clebsch-blowup-back {
+    border-color: #4b5055;
+    background: #23272b;
+    color: #dfe3e6;
+}
+
+body.dark-mode .clebsch-blowup-exceptional,
+body.dark-mode .clebsch-blowup-arrow {
+    stroke: #aeb3b8;
+}
+
+body.dark-mode .clebsch-blowup-arrow-label {
+    fill: #b8bdc2;
+}
+
+body.dark-mode .clebsch-blowup-arrowhead-fill {
+    fill: #aeb3b8;
+}
+
+/* ============================================================
+   PAGE 2 — EXCEPTIONAL CURVE INSIDE THE TARGET CARD
+   ============================================================ */
+
+.clebsch-target-card.clebsch-target-card-blowup {
+    width: min(560px, calc(100% - 36px));
+    height: clamp(285px, 36vh, 350px);
+}
+
+.clebsch-target-card-blowup .clebsch-target-card-header {
+    min-height: 78px;
+    padding: 10px 11px 9px 13px;
+}
+
+.clebsch-target-card-blowup
+    .clebsch-target-card-meaning {
+    white-space: normal;
+}
+
+.clebsch-target-card-blowup .clebsch-target-calculator {
+    top: 78px;
+    left: 166px;
+}
+
+.clebsch-target-special-legend {
+    position: absolute;
+    top: 88px;
+    right: auto;
+    left: 176px;
+    z-index: 9;
+    display: grid;
+    gap: 4px;
+    padding: 6px 8px;
+    border: 1px solid rgba(120, 120, 120, 0.22);
+    border-radius: 5px;
+    background: rgba(255, 255, 255, 0.90);
+    color: #555;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: var(--p2-type-xs);
+    line-height: 1.15;
+    pointer-events: none;
+}
+
+.clebsch-target-special-legend[hidden] {
+    display: none !important;
+}
+
+.clebsch-target-special-legend-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+}
+
+.clebsch-target-legend-dot {
+    width: 9px;
+    height: 9px;
+    flex: 0 0 9px;
+    border-radius: 50%;
+    box-sizing: border-box;
+}
+
+.clebsch-target-legend-dot-special {
+    border: 1px solid #A16600;
+    background: #FFAB00;
+}
+
+.clebsch-target-legend-dot-moving {
+    border: 1px solid rgba(120, 45, 118, 0.75);
+    background: #A944A7;
+}
+
+body.dark-mode .clebsch-target-special-legend {
+    border-color: rgba(255, 255, 255, 0.16);
+    background: rgba(29, 33, 37, 0.90);
+    color: #dfe3e6;
+}
+
+.clebsch-exceptional-inset {
+    position: absolute;
+    top: 78px;
+    bottom: 0;
+    left: 0;
+    z-index: 5;
+    width: 150px;
+    padding: 9px 7px 8px;
+    border-right: 1px solid #e2e2e2;
+    background: rgba(250, 250, 250, 0.96);
+    box-sizing: border-box;
+}
+
+.clebsch-exceptional-inset[hidden],
+.clebsch-exceptional-map-divider[hidden] {
+    display: none !important;
+}
+
+.clebsch-exceptional-title {
+    color: #333;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: var(--p2-type-sm);
+    font-weight: 600;
+    text-align: center;
+}
+
+.clebsch-exceptional-subtitle {
+    margin-top: 3px;
+    color: #888;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: var(--p2-type-xs);
+    text-align: center;
+}
+
+.clebsch-exceptional-svg {
+    display: block;
+    width: 136px;
+    height: 132px;
+    margin: 2px auto 0;
+    overflow: visible;
+    font-family: Georgia, "Times New Roman", serif;
+}
+
+.clebsch-exceptional-quotient {
+    margin-top: -2px;
+    color: #777;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: var(--p2-type-xs);
+    font-style: italic;
+    text-align: center;
+}
+
+.clebsch-exceptional-control {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 6px;
+    align-items: center;
+    margin-top: 8px;
+    color: #777;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: var(--p2-type-xs);
+    font-style: italic;
+}
+
+.clebsch-exceptional-control input[type="range"] {
+    width: 100%;
+    min-width: 0;
+    margin: 0;
+    accent-color: #A944A7;
+    cursor: ew-resize;
+}
+
+.clebsch-exceptional-map-divider {
+    position: absolute;
+    top: 104px;
+    left: 142px;
+    z-index: 8;
+    padding: 2px 5px;
+    border-radius: 9px;
+    background: rgba(255, 255, 255, 0.94);
+    color: #666;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: var(--p2-type-xs);
+    font-style: italic;
+    pointer-events: none;
+}
+
+.clebsch-target-card-blowup .clebsch-blowup-special-label {
+    font-size: var(--p2-type-xs);
+}
+
+.clebsch-target-card-blowup .clebsch-blowup-selected-label {
+    font-size: var(--p2-type-sm);
+}
+
+body.dark-mode .clebsch-exceptional-inset {
+    border-right-color: #454a4f;
+    background: rgba(31, 35, 39, 0.97);
+}
+
+body.dark-mode .clebsch-exceptional-title {
+    color: #ededed;
+}
+
+body.dark-mode .clebsch-exceptional-subtitle,
+body.dark-mode .clebsch-exceptional-quotient,
+body.dark-mode .clebsch-exceptional-control {
+    color: #b8bdc2;
+}
+
+body.dark-mode .clebsch-exceptional-map-divider {
+    background: rgba(29, 33, 37, 0.94);
+    color: #c7cbd0;
+}
+
+@media (max-height: 820px) and (max-width: 1600px) {
+    .clebsch-target-card.clebsch-target-card-blowup {
+        width: min(500px, calc(100% - 24px));
+        height: 286px;
+        right: 12px;
+        bottom: 12px;
+    }
+
+    .clebsch-target-card-blowup .clebsch-target-card-header {
+        min-height: 72px;
+    }
+
+    .clebsch-target-card-blowup .clebsch-target-calculator {
+        top: 72px;
+        left: 154px;
+    }
+
+    .clebsch-target-special-legend {
+        top: 82px;
+        right: auto;
+        left: 164px;
+    }
+
+    .clebsch-exceptional-inset {
+        top: 72px;
+        width: 140px;
+    }
+
+    .clebsch-exceptional-svg {
+        width: 124px;
+        height: 120px;
+    }
+
+    .clebsch-exceptional-map-divider {
+        top: 98px;
+        left: 132px;
+    }
+}
+
+/* The exceptional-card e_i are reference marks; their images phi(e_i)
+   on the genuine branch quartic carry the visual emphasis. */
+.clebsch-exceptional-special-point {
+    fill: #FFAB00;
+    stroke: #A16600;
+    stroke-width: 0.8;
+    opacity: 0.72;
+}
+
+body.dark-mode .clebsch-exceptional-special-point {
+    fill: #ffc35a;
+    stroke: #c98a16;
+    opacity: 0.78;
+}
+
+/* The bitangents entry intentionally uses the same .surface-button
+   typography, padding, active state and dark-mode behavior as Clebsch cubic.
+   Only its right-panel chapter framing needs separate styling. */
+.clebsch-bitangents-chapter .clebsch-reading-intro,
+.clebsch-bitangents-chapter .clebsch-question,
+.clebsch-bitangents-chapter .clebsch-proof-tabs {
+    display: none !important;
+}

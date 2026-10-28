@@ -1,11 +1,145 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0">
+
     <title>Geometry of Algebraic Surfaces</title>
+
+    <link
+        rel="stylesheet"
+        href="style-v10-unified-desmos.css?v=20261028-clebsch-peer-nav1">
+
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [["\\(", "\\)"]],
+                displayMath: [["\\[", "\\]"]]
+            }
+        };
+    </script>
+
+    <script
+        defer
+        src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+    </script>
+
+    <script
+        src="https://www.desmos.com/api/v1.13/calculator.js?apiKey=288c22b7eaa74e1792d8b281fad64ce3">
+    </script>
+        <link rel="stylesheet" href="v12-moving-p.css?v=20261012-no-position-menu1">
+    <link rel="stylesheet" href="v12-special-cases.css?v=20261028-thesis-v1">
+    <link rel="stylesheet" href="thesis-credits.css?v=20261028-thesis-v11">
 </head>
 
 <body>
-    <h1>Geometry of Algebraic Surfaces</h1>
-    <p>Interactive algebraic geometry atlas.</p>
+    <!-- Thesis edition: mathematical content frozen; credits and watermark only. -->
+    <div class="app-shell">
+
+        <aside class="left-panel">
+            <header class="site-heading">
+                <div class="eyebrow">GEOMETRY OF</div>
+                <div class="site-title">Algebraic Surfaces</div>
+                <button
+                    id="theme-toggle"
+                    class="theme-toggle"
+                    type="button"
+                    aria-label="Use dark mode"
+                    title="Use dark mode">
+                    ☾
+                </button>
+            </header>
+
+            <nav class="surface-nav">
+                <div class="nav-heading">WARM-UP</div>
+
+                <button
+                    class="surface-button active"
+                    data-surface="warmup"
+                    type="button">
+                    Degree of a surface
+                </button>
+
+                <div class="nav-heading">SURFACES</div>
+
+                <button
+                    class="surface-button"
+                    data-surface="clebsch"
+                    type="button">
+                    Clebsch cubic
+                </button>
+                <div class="nav-heading">CONFIGURATIONS</div>
+
+                <button class="surface-button clebsch-bitangents-nav" id="clebsch-lines-bitangents-heading" data-surface="bitangents" type="button" aria-label="Open the 27 lines and 28 bitangents chapter">27 lines &amp; 28 bitangents</button>
+            </nav>
+
+            <section class="geometry-section">
+                <div class="control-heading-row">
+                    <div id="control-section-heading" class="nav-heading">ADJUSTMENT</div>
+                    <div id="control-heading-actions" class="control-heading-actions"></div>
+                </div>
+                <div id="geometry-controls"></div>
+            </section>
+            <footer class="thesis-credits" aria-label="Contents and credits">
+                <svg class="thesis-credits-watermark" viewBox="0 0 240 158"
+                     aria-hidden="true" focusable="false">
+                    <g class="thesis-mark-orbits" fill="none" stroke-width="0.95">
+                        <ellipse cx="120" cy="78" rx="85" ry="44" transform="rotate(-31 120 78)"/>
+                        <ellipse cx="120" cy="78" rx="85" ry="44" transform="rotate(31 120 78)"/>
+                        <ellipse cx="120" cy="78" rx="73" ry="49" transform="rotate(90 120 78)"/>
+                        <circle cx="120" cy="78" r="51" stroke-dasharray="1.7 5.2"/>
+                        <path d="M24 128 L203 32 M27 41 L213 116 M67 14 L172 142 M52 134 L186 19"/>
+                    </g>
+                    <g class="thesis-mark-curves" fill="none" stroke-width="1.55" stroke-linecap="round">
+                        <path d="M17 96 C48 18 92 16 120 78 S191 142 223 61"/>
+                        <path d="M24 59 C66 133 94 129 120 78 S183 21 217 103"/>
+                    </g>
+                    <g class="thesis-mark-points">
+                        <circle cx="120" cy="78" r="3.3"/>
+                        <circle cx="52" cy="57" r="2.5"/>
+                        <circle cx="187" cy="99" r="2.5"/>
+                        <circle cx="77" cy="124" r="2.2"/>
+                        <circle cx="160" cy="31" r="2.2"/>
+                    </g>
+                </svg>
+                <div class="thesis-credits-rule" aria-hidden="true"></div>
+                <div class="thesis-credits-heading">CONTENTS &amp; CREDITS</div>
+                <p>Mathematical content based on
+                    <em>Algebraic Surfaces and K3 Surfaces</em>,
+                    taught by Salvatore Floccari in Winter Semester 2025/26.</p>
+                <p>Code developed with assistance from ChatGPT,
+                    primarily GPT-5.6 (Sol).</p>
+                <div class="thesis-credits-edition">THESIS EDITION · 2026</div>
+            </footer>
+        </aside>
+
+        <div
+            id="workspace-scroll"
+            class="workspace-scroll">
+            <div class="workspace-track">
+
+                <main
+                    id="visual-stage"
+                    class="visual-stage">
+                </main>
+
+                <aside class="right-panel">
+                    <div id="info-panel"></div>
+                </aside>
+
+            </div>
+        </div>
+
+    </div>
+
+    <script src="clebsch-geometry-v10.js?v=20261008-autofit-28-contacts"></script>
+    <script src="clebsch-page-v10.js?v=20261028-regression-audit1"></script>
+    <script src="app-v10-unified-desmos.js?v=20261028-thesis-v1"></script>
+    <script src="v12-line-incidence.js?v=20261010-v12-cases1"></script>
+    <script src="v12-branch-locus.js?v=20261012-cusp-conic1"></script>
+    <script src="v12-moving-p.js?v=20261012-no-position-menu1"></script>
+    <script src="v12-special-cases.js?v=20261028-thesis-v1"></script>
 </body>
 </html>
